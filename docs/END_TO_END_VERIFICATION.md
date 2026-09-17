@@ -31,7 +31,7 @@ A fresh virtual environment was created outside the repository with CPython 3.11
 `python -m pip install -r requirements.txt` installed the exact direct pins. From that
 environment:
 
-- 198 deterministic and integration tests passed; 24 live tests were skipped by
+- 205 deterministic and integration tests passed; 32 live tests were skipped by
   default;
 - Ruff passed over the repository;
 - `pip check` reported no broken requirements;
@@ -47,8 +47,8 @@ environment:
 The focused API, Streamlit and launcher suite passed 42 tests. It verifies mocked
 model responses, structured Ollama failures, UI/API request equivalence, public
 pagination, health behavior, launcher commands, process-group shutdown and port
-validation. The separately marked live suite passed 24/24 against local Qwen, and the
-Step 25 benchmark passed 32/32.
+validation. The separately marked live suite passed 32/32 against local Qwen, and the
+expanded benchmark passed 39/39.
 
 ## Reproduction
 

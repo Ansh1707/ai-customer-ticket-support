@@ -143,3 +143,80 @@ def test_live_held_out_creation_period_count(service: QueryService) -> None:
     assert result.data.value == 188
     assert result.data.applied_date_range is not None
     assert result.data.applied_date_range.label == "last month"
+
+
+def test_live_negated_priority_count(service: QueryService) -> None:
+    result = ask(service, "How many tickets are not Critical?")
+
+    assert isinstance(result.data, CountAnalyticsResult)
+    assert result.data.value == 445
+
+
+def test_live_unresolved_status_synonym(service: QueryService) -> None:
+    result = ask(service, "How many tickets are still awaiting resolution?")
+
+    assert isinstance(result.data, CountAnalyticsResult)
+    assert result.data.value == 173
+
+
+def test_live_explicit_created_period_with_resolved_status(service: QueryService) -> None:
+    result = ask(service, "How many resolved tickets were created last month?")
+
+    assert isinstance(result.data, CountAnalyticsResult)
+    assert result.data.value == 121
+    assert result.data.applied_date_range is not None
+    assert result.data.applied_date_range.label == "last month"
+
+
+def test_live_explicit_anomaly_date_range(service: QueryService) -> None:
+    result = ask(
+        service,
+        "Show resolution-time anomalies from March 1 through March 10, 2024.",
+    )
+
+    assert isinstance(result.data, AnomalyDetectionResult)
+    assert result.data.matching_ticket_count == 3
+    assert result.data.applied_date_range is not None
+    assert result.data.applied_date_range.label == "2024-03-01 through 2024-03-10"
+
+
+def test_live_multiple_numeric_conditions(service: QueryService) -> None:
+    result = ask(
+        service,
+        (
+            "How many tickets have response time greater than 2 hours and "
+            "customer rating below 3?"
+        ),
+    )
+
+    assert isinstance(result.data, CountAnalyticsResult)
+    assert result.data.value == 33
+
+
+def test_live_top_three_resolved_agents(service: QueryService) -> None:
+    result = ask(service, "Show the top 3 agents by number of resolved tickets.")
+
+    assert isinstance(result.data, GroupedAnalyticsResult)
+    assert [(row.group_value, row.value) for row in result.data.rows] == [
+        ("AGT-09", 37),
+        ("AGT-12", 37),
+        ("AGT-06", 34),
+    ]
+
+
+def test_live_group_count_preserves_nonranking_order(service: QueryService) -> None:
+    result = ask(service, "Show the ticket count for each category.")
+
+    assert isinstance(result.data, GroupedAnalyticsResult)
+    assert [(row.group_value, row.value) for row in result.data.rows] == [
+        ("Billing", 159),
+        ("General", 189),
+        ("Technical", 152),
+    ]
+
+
+def test_live_exact_customer_rating_filter(service: QueryService) -> None:
+    result = ask(service, "How many tickets have a customer rating of 1?")
+
+    assert isinstance(result.data, CountAnalyticsResult)
+    assert result.data.value == 14

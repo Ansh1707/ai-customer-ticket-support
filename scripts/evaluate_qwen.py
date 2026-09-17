@@ -173,22 +173,12 @@ def _matches_subset(actual: Any, expected: Any) -> bool:
             for key, value in expected.items()
         )
     if isinstance(expected, list):
-        if not isinstance(actual, list):
+        if not isinstance(actual, list) or len(actual) != len(expected):
             return False
-        remaining = list(actual)
-        for expected_item in expected:
-            match_index = next(
-                (
-                    index
-                    for index, actual_item in enumerate(remaining)
-                    if _matches_subset(actual_item, expected_item)
-                ),
-                None,
-            )
-            if match_index is None:
-                return False
-            remaining.pop(match_index)
-        return True
+        return all(
+            _matches_subset(actual_item, expected_item)
+            for actual_item, expected_item in zip(actual, expected, strict=True)
+        )
     if isinstance(expected, (int, float)) and not isinstance(expected, bool):
         return (
             isinstance(actual, (int, float))

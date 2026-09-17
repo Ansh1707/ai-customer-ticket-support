@@ -24,7 +24,7 @@ def test_readme_contains_every_step_27_evaluator_requirement() -> None:
         "## Anomaly rules",
         "## Try the assessment questions",
         "## Testing",
-        "32-case Qwen evaluation",
+        "39-case Qwen evaluation",
         "## Troubleshooting",
         "## Known limitations",
     )

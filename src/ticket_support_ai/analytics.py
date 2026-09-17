@@ -182,7 +182,8 @@ def _build_where(
         if isinstance(filter_item, EqualityFilter):
             name = f"filter_{index}"
             params[name] = filter_item.value
-            conditions.append(f"{expression} = :{name}")
+            operator = "=" if filter_item.operator == "eq" else "!="
+            conditions.append(f"{expression} {operator} :{name}")
         elif isinstance(filter_item, MembershipFilter):
             names = []
             for value_index, value in enumerate(filter_item.values):

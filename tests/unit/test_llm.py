@@ -23,6 +23,7 @@ from ticket_support_ai.llm import (
     OllamaUnavailableError,
     QuestionValidationError,
     StructuredOutputError,
+    _compile_analytics_plan,
     _extract_explicit_date_range,
     _preserve_anomaly_request,
     _preserve_explicit_constraints,
@@ -336,6 +337,8 @@ def test_explicit_constraints_remove_unstated_model_filters_and_preserve_groupin
     assert grouped.operation is AnalyticsOperation.GROUPED_AGGREGATE
     assert grouped.group_by is GroupField.CATEGORY
     assert grouped.aggregation.value == "count"
+    assert grouped.sort_field.value == "category"
+    assert grouped.sort_direction.value == "asc"
 
 
 def test_explicit_english_date_range_and_safe_route_cues_are_deterministic() -> None:
@@ -374,3 +377,102 @@ def test_not_resolved_within_does_not_add_a_resolved_status_filter() -> None:
     )
 
     assert corrected.statuses == ()
+
+
+def test_negation_and_unresolved_synonyms_are_preserved_deterministically() -> None:
+    negated = _preserve_explicit_constraints(
+        AnalyticsPlan(operation="count", priorities=("Critical",)),
+        "How many tickets are not Critical?",
+    )
+    awaiting = _preserve_explicit_constraints(
+        AnalyticsPlan(operation="count"),
+        "How many tickets are still awaiting resolution?",
+    )
+
+    negated_request = _compile_analytics_plan(
+        negated, "How many tickets are not Critical?"
+    )
+    awaiting_request = _compile_analytics_plan(
+        awaiting, "How many tickets are still awaiting resolution?"
+    )
+
+    assert negated.priorities == ()
+    assert negated.excluded_priorities == ("Critical",)
+    assert [(item.field, item.operator, item.value) for item in negated_request.filters] == [
+        (FilterField.PRIORITY, "ne", "Critical")
+    ]
+    assert awaiting.statuses == (TicketStatus.OPEN, TicketStatus.ESCALATED)
+    assert awaiting_request.filters[0].operator == "in"
+
+
+def test_all_explicit_numeric_conditions_are_preserved() -> None:
+    corrected = _preserve_explicit_constraints(
+        AnalyticsPlan(operation="count"),
+        (
+            "How many tickets have response time greater than 2 hours and "
+            "customer rating below 3?"
+        ),
+    )
+    question = (
+        "How many tickets have response time greater than 2 hours and "
+        "customer rating below 3?"
+    )
+    request = _compile_analytics_plan(corrected, question)
+
+    assert [
+        (item.field, item.operator, item.value) for item in request.filters
+    ] == [
+        (FilterField.RESPONSE_TIME_HRS, "gt", 2.0),
+        (FilterField.CUSTOMER_RATING, "lt", 3.0),
+    ]
+
+    rating = _preserve_explicit_constraints(
+        AnalyticsPlan(operation="count"),
+        "How many tickets have a customer rating of 1?",
+    )
+    rating_request = _compile_analytics_plan(
+        rating, "How many tickets have a customer rating of 1?"
+    )
+    assert [(item.field, item.operator, item.value) for item in rating_request.filters] == [
+        (FilterField.CUSTOMER_RATING, "eq", 1.0)
+    ]
+
+
+def test_created_date_language_wins_over_resolved_status_language() -> None:
+    corrected = _preserve_explicit_constraints(
+        AnalyticsPlan(operation="count"),
+        "How many resolved tickets were created last month?",
+    )
+
+    assert corrected.statuses == (TicketStatus.RESOLVED,)
+    assert corrected.time_field.value == "created_at"
+    assert corrected.relative_period.value == "last_month"
+
+
+def test_explicit_anomaly_date_range_is_preserved() -> None:
+    corrected = _preserve_anomaly_request(
+        AnomalyQueryRequest(rule="long_resolution"),
+        "Show resolution-time anomalies from March 1 through March 10, 2024.",
+    )
+
+    assert corrected.time_filter is not None
+    assert corrected.time_filter.field.value == "resolved_at"
+    assert corrected.time_filter.start_date == date(2024, 3, 1)
+    assert corrected.time_filter.end_date == date(2024, 3, 10)
+
+
+def test_top_n_ranking_keeps_requested_semantic_limit() -> None:
+    corrected = _preserve_explicit_constraints(
+        AnalyticsPlan(operation="list"),
+        "Show the top 3 agents by number of resolved tickets.",
+    )
+    request = _compile_analytics_plan(
+        corrected, "Show the top 3 agents by number of resolved tickets."
+    )
+
+    assert request.operation is AnalyticsOperation.GROUPED_AGGREGATE
+    assert request.group_by is GroupField.AGENT_ID
+    assert request.aggregation.value == "count"
+    assert request.sort[0].field.value == "result"
+    assert request.sort[0].direction.value == "desc"
+    assert request.limit == 3

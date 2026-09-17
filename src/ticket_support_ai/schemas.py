@@ -298,12 +298,12 @@ ScalarFilterValue: TypeAlias = str | float | int
 
 
 class EqualityFilter(BaseModel):
-    """Exact match against one allowlisted field."""
+    """Exact or negated match against one allowlisted field."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     field: FilterField
-    operator: Literal["eq"]
+    operator: Literal["eq", "ne"]
     value: ScalarFilterValue
 
     @model_validator(mode="after")

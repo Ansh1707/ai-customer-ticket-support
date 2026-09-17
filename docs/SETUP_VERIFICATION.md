@@ -82,8 +82,8 @@ These are smoke-test measurements on one machine, not final application benchmar
   and stops only launcher-owned processes. The final isolated-port run reached ready
   status, returned all 28 data-quality findings, and released both ports on Ctrl+C.
 
-Latest verification: 198 deterministic/integration tests passed, Ruff and dependency
-checks passed, and all 24 live `qwen2.5:3b` tests passed in 100.64 seconds.
+Latest verification: 205 deterministic/integration tests passed, Ruff and dependency
+checks passed, and all 32 live `qwen2.5:3b` tests passed in 120.05 seconds.
 
 ## Step 22 diagnostics status
 
@@ -107,13 +107,13 @@ anomaly reasons, insufficient baselines, and idempotent ingestion. See
 
 ## Step 25 Qwen evaluation
 
-Step 25 is complete. The separate 32-case benchmark labels expected interpretation
-and independently calculated answer evidence for five assessment samples and 27
-additional cases. Twenty-three cases are held out from exact prompt examples. The
-final `qwen2.5:3b` run passed 32/32 cases: 100% interpretation correctness, supported
-answer correctness, assessment-sample correctness, held-out correctness,
+Step 25 is complete. The expanded 39-case benchmark labels expected interpretation
+and independently calculated answer evidence for five assessment samples and 34
+additional cases. Thirty cases are outside the exact prompt examples. The final
+`qwen2.5:3b` run passed 39/39 cases: 100% interpretation correctness, supported
+answer correctness, assessment-sample correctness, non-example-case correctness,
 clarification behavior, and invalid/prompt-injection safe handling, with no execution
-failures. Mean end-to-end latency was 5,123.8 ms and P95 was 9,294.3 ms.
+failures. Mean end-to-end latency was 4,394.6 ms and P95 was 7,666.4 ms.
 
 The first untuned run is preserved and reported honestly: it passed 25/32 overall and
 22/27 supported answers. General semantic guardrails were then added and covered by

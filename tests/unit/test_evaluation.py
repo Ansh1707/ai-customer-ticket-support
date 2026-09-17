@@ -8,7 +8,6 @@ from pathlib import Path
 from scripts.evaluate_qwen import (
     _build_report,
     _markdown,
-    _matches_interpretation,
     _matches_subset,
 )
 
@@ -19,7 +18,7 @@ CASES_PATH = PROJECT_ROOT / "evaluation/qwen_eval_cases.json"
 def test_evaluation_set_has_required_size_split_and_categories() -> None:
     cases = json.loads(CASES_PATH.read_text(encoding="utf-8"))
 
-    assert len(cases) == 32
+    assert len(cases) == 39
     assert len({case["id"] for case in cases}) == len(cases)
     assert sum(not case["prompt_example"] for case in cases) >= 20
     assert {
@@ -34,30 +33,39 @@ def test_evaluation_set_has_required_size_split_and_categories() -> None:
         "ambiguous",
         "unsupported",
         "prompt_injection",
+        "negation",
     } <= {case["category"] for case in cases}
     assert all(case["expected_interpretation"] for case in cases)
     assert all(case["expected_answer"] for case in cases)
 
 
-def test_subset_matcher_handles_nested_unordered_evidence_and_float_tolerance() -> None:
+def test_subset_matcher_requires_exact_ordered_rows_and_float_tolerance() -> None:
     actual = {
-        "filters": [
-            {"field": "status", "operator": "eq", "value": "Open"},
-            {"field": "priority", "operator": "eq", "value": "Critical"},
+        "rows": [
+            {"group_value": "AGT-09", "value": 37, "extra": "allowed"},
+            {"group_value": "AGT-12", "value": 37},
         ],
         "value": 3.740384615384616,
         "extra": "allowed",
     }
     expected = {
-        "filters": [
-            {"field": "priority", "operator": "eq", "value": "Critical"}
+        "rows": [
+            {"group_value": "AGT-09", "value": 37},
+            {"group_value": "AGT-12", "value": 37},
         ],
         "value": 3.7403846153846154,
     }
 
     assert _matches_subset(actual, expected)
     assert not _matches_subset(actual, {"value": 3.7})
-    assert not _matches_interpretation(actual, expected)
+    assert not _matches_subset(
+        actual,
+        {"rows": list(reversed(expected["rows"]))},
+    )
+    assert not _matches_subset(
+        actual,
+        {"rows": expected["rows"][:1]},
+    )
 
 
 def test_report_metrics_and_markdown_are_derived_from_case_results() -> None:

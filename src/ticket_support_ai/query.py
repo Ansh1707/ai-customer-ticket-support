@@ -161,14 +161,22 @@ def _apply_public_paging(
 
     if isinstance(interpretation, AnomalyQueryRequest):
         return AnomalyQueryRequest.model_validate(
-            {**interpretation.model_dump(), "limit": limit, "offset": offset}
+            {
+                **interpretation.model_dump(),
+                "limit": min(interpretation.limit, limit),
+                "offset": offset,
+            }
         )
     if isinstance(interpretation, AnalyticsRequest) and interpretation.operation.value in {
         "list",
         "grouped_aggregate",
     }:
         return AnalyticsRequest.model_validate(
-            {**interpretation.model_dump(), "limit": limit, "offset": offset}
+            {
+                **interpretation.model_dump(),
+                "limit": min(interpretation.limit, limit),
+                "offset": offset,
+            }
         )
     return interpretation
 

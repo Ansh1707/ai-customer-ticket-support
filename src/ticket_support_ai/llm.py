@@ -127,6 +127,9 @@ Rules:
 - total/sum, minimum, and maximum -> aggregation=sum, minimum, or maximum with the
   explicitly named numeric metric
 - not resolved within N hours -> resolution_elapsed_hrs gt N
+- Preserve every numeric condition. A question may contain more than one condition.
+- "not Critical" excludes Critical; do not convert negation into equality.
+- "top N" ranks by the requested result descending and sets limit=N.
 - show/list requests -> operation=list
 - this/last week or month must populate relative_period; use resolved_at when the
   wording is about resolved tickets and created_at for general ticket dates
@@ -202,6 +205,21 @@ class IntentRoute(BaseModel):
     intent: QueryIntent
 
 
+class NumericConditionPlan(BaseModel):
+    """One model-facing numeric condition preserved before strict compilation."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    field: Literal[
+        FilterField.RESPONSE_TIME_HRS,
+        FilterField.RESOLUTION_TIME_HRS,
+        FilterField.CUSTOMER_RATING,
+        FilterField.RESOLUTION_ELAPSED_HRS,
+    ]
+    operator: Literal["eq", "gt", "gte", "lt", "lte"]
+    value: float = Field(ge=0)
+
+
 class AnalyticsPlan(BaseModel):
     """Compact model-facing representation compiled to the strict request contract."""
 
@@ -209,14 +227,18 @@ class AnalyticsPlan(BaseModel):
 
     operation: AnalyticsOperation
     categories: tuple[TicketCategory, ...] = ()
+    excluded_categories: tuple[TicketCategory, ...] = ()
     priorities: tuple[TicketPriority, ...] = ()
+    excluded_priorities: tuple[TicketPriority, ...] = ()
     statuses: tuple[TicketStatus, ...] = ()
+    excluded_statuses: tuple[TicketStatus, ...] = ()
     ticket_ids: tuple[str, ...] = ()
     agent_ids: tuple[str, ...] = ()
     summary_contains: str | None = None
     threshold_field: FilterField | None = None
     threshold_operator: Literal["gt", "gte", "lt", "lte"] | None = None
     threshold_value: float | None = None
+    numeric_conditions: tuple[NumericConditionPlan, ...] = ()
     aggregation: Aggregation | None = None
     metric: MetricField | None = None
     group_by: GroupField | None = None
@@ -464,6 +486,9 @@ def _compile_analytics_plan(
     _append_set_filter(filters, "category", plan.categories)
     _append_set_filter(filters, "priority", plan.priorities)
     _append_set_filter(filters, "status", plan.statuses)
+    _append_exclusion_filters(filters, "category", plan.excluded_categories)
+    _append_exclusion_filters(filters, "priority", plan.excluded_priorities)
+    _append_exclusion_filters(filters, "status", plan.excluded_statuses)
     _append_set_filter(filters, "ticket_id", plan.ticket_ids)
     _append_set_filter(filters, "agent_id", plan.agent_ids)
     if plan.summary_contains:
@@ -474,12 +499,22 @@ def _compile_analytics_plan(
                 "value": plan.summary_contains,
             }
         )
+    for condition in plan.numeric_conditions:
+        filters.append(
+            {
+                "field": condition.field,
+                "operator": condition.operator,
+                "value": condition.value,
+            }
+        )
     threshold_parts = (
         plan.threshold_field,
         plan.threshold_operator,
         plan.threshold_value,
     )
-    if all(value is not None for value in threshold_parts):
+    if all(value is not None for value in threshold_parts) and not any(
+        item.field == plan.threshold_field for item in plan.numeric_conditions
+    ):
         filters.append(
             {
                 "field": plan.threshold_field,
@@ -555,6 +590,15 @@ def _append_set_filter(
         filters.append({"field": field, "operator": "in", "values": values})
 
 
+def _append_exclusion_filters(
+    filters: list[dict[str, Any]],
+    field: str,
+    values: tuple[Any, ...],
+) -> None:
+    for value in values:
+        filters.append({"field": field, "operator": "ne", "value": value})
+
+
 def _preserve_explicit_constraints(
     plan: AnalyticsPlan,
     question: str,
@@ -564,27 +608,60 @@ def _preserve_explicit_constraints(
     lowered = question.casefold()
     updates: dict[str, Any] = {}
     explicit_categories = tuple(
-        item for item in TicketCategory if _contains_word(lowered, item.value.casefold())
+        item
+        for item in TicketCategory
+        if _contains_word(lowered, item.value.casefold())
+        and not _is_negated_value(lowered, item.value.casefold())
+    )
+    excluded_categories = tuple(
+        item
+        for item in TicketCategory
+        if _is_negated_value(lowered, item.value.casefold())
     )
     explicit_priorities = tuple(
-        item for item in TicketPriority if _contains_word(lowered, item.value.casefold())
+        item
+        for item in TicketPriority
+        if _contains_word(lowered, item.value.casefold())
+        and not _is_negated_value(lowered, item.value.casefold())
+    )
+    excluded_priorities = tuple(
+        item
+        for item in TicketPriority
+        if _is_negated_value(lowered, item.value.casefold())
     )
     # Categorical filters are closed-world dataset values. Rebuild them from the
     # question so a small model cannot silently narrow a result with invented values.
     updates["categories"] = explicit_categories
+    updates["excluded_categories"] = excluded_categories
     updates["priorities"] = explicit_priorities
+    updates["excluded_priorities"] = excluded_priorities
 
-    if "unresolved" in lowered:
+    unresolved_phrases = (
+        "unresolved",
+        "awaiting resolution",
+        "awaiting a resolution",
+        "not yet resolved",
+        "still pending",
+    )
+    if any(phrase in lowered for phrase in unresolved_phrases):
         updates["statuses"] = (TicketStatus.OPEN, TicketStatus.ESCALATED)
+        updates["excluded_statuses"] = ()
     elif "not resolved within" in lowered:
         # This asks about elapsed resolution duration across resolved and unresolved
         # tickets, so it must not be narrowed to status=Resolved.
         updates["statuses"] = ()
+        updates["excluded_statuses"] = ()
     else:
         updates["statuses"] = tuple(
             item
             for item in TicketStatus
             if _contains_word(lowered, item.value.casefold())
+            and not _is_negated_value(lowered, item.value.casefold())
+        )
+        updates["excluded_statuses"] = tuple(
+            item
+            for item in TicketStatus
+            if _is_negated_value(lowered, item.value.casefold())
         )
 
     search_cues = ("summary", "contain", "mention", "search")
@@ -602,11 +679,7 @@ def _preserve_explicit_constraints(
         if phrase in lowered:
             matched_period = True
             updates["relative_period"] = period
-            updates["time_field"] = (
-                TicketTimeField.RESOLVED_AT
-                if "resolv" in lowered
-                else TicketTimeField.CREATED_AT
-            )
+            updates["time_field"] = _explicit_time_field(lowered)
             break
     temporal_cues = (
         "today",
@@ -645,11 +718,7 @@ def _preserve_explicit_constraints(
             start_date=start_date,
             end_date=end_date,
             relative_period=None,
-            time_field=(
-                TicketTimeField.RESOLVED_AT
-                if "resolv" in lowered
-                else TicketTimeField.CREATED_AT
-            ),
+            time_field=_explicit_time_field(lowered),
         )
 
     threshold_match = re.search(
@@ -662,6 +731,13 @@ def _preserve_explicit_constraints(
             threshold_operator="gt",
             threshold_value=float(threshold_match.group(1)),
         )
+    else:
+        updates.update(
+            threshold_field=None,
+            threshold_operator=None,
+            threshold_value=None,
+        )
+    updates["numeric_conditions"] = _extract_numeric_conditions(lowered)
 
     rating_language = "customer rating" in lowered or "satisfaction" in lowered
     if "resolution time" in lowered:
@@ -700,10 +776,29 @@ def _preserve_explicit_constraints(
     if "resolved the most" in lowered:
         updates["aggregation"] = Aggregation.COUNT
         updates["statuses"] = (TicketStatus.RESOLVED,)
+    top_match = re.search(r"\b(top|bottom)\s+(\d{1,3})\b", lowered)
+    if top_match is not None and requested_group is not None:
+        updates["operation"] = AnalyticsOperation.GROUPED_AGGREGATE
+        updates["aggregation"] = Aggregation.COUNT
+        updates["group_by"] = requested_group
+        updates["sort_field"] = SortField.RESULT
+        updates["sort_direction"] = (
+            SortDirection.DESCENDING
+            if top_match.group(1) == "top"
+            else SortDirection.ASCENDING
+        )
+        updates["limit"] = min(100, max(1, int(top_match.group(2))))
+        if "resolved" in lowered:
+            updates["statuses"] = (TicketStatus.RESOLVED,)
     if requested_group is not None and "count" in lowered:
         updates["operation"] = AnalyticsOperation.GROUPED_AGGREGATE
         updates["aggregation"] = Aggregation.COUNT
         updates["group_by"] = requested_group
+        if top_match is None and not any(
+            word in lowered for word in ("most", "highest", "lowest", "worst", "best")
+        ):
+            updates["sort_field"] = SortField(requested_group.value)
+            updates["sort_direction"] = SortDirection.ASCENDING
     if any(word in lowered for word in ("lowest", "worst")):
         updates["sort_direction"] = SortDirection.ASCENDING
     elif any(word in lowered for word in ("most", "highest")):
@@ -767,15 +862,25 @@ def _preserve_anomaly_request(
         (value for phrase, value in period_phrases.items() if phrase in lowered),
         None,
     )
-    if period is None:
+    explicit_range = _extract_explicit_date_range(lowered)
+    rule = updates.get("rule", request.rule)
+    time_field = (
+        TicketTimeField.CREATED_AT
+        if rule == "overdue_high_priority"
+        else _explicit_time_field(lowered, default=TicketTimeField.RESOLVED_AT)
+    )
+    if explicit_range is not None:
+        start_date, end_date = explicit_range
+        updates["time_filter"] = {
+            "field": time_field,
+            "start_date": start_date,
+            "end_date": end_date,
+        }
+    elif period is None:
         updates["time_filter"] = None
     else:
         updates["time_filter"] = {
-            "field": (
-                TicketTimeField.CREATED_AT
-                if updates.get("rule", request.rule) == "overdue_high_priority"
-                else TicketTimeField.RESOLVED_AT
-            ),
+            "field": time_field,
             "relative_period": period,
         }
     payload = request.model_dump(mode="json")
@@ -806,6 +911,78 @@ def _extract_explicit_date_range(text: str) -> tuple[date, date] | None:
 
 def _contains_word(text: str, value: str) -> bool:
     return re.search(rf"\b{re.escape(value)}\b", text) is not None
+
+
+def _is_negated_value(text: str, value: str) -> bool:
+    return re.search(
+        rf"\b(?:not|except|excluding|exclude)\s+(?:a\s+)?{re.escape(value)}\b",
+        text,
+    ) is not None
+
+
+def _explicit_time_field(
+    text: str,
+    *,
+    default: TicketTimeField = TicketTimeField.CREATED_AT,
+) -> TicketTimeField:
+    """Choose the event explicitly named by the user, independent of status words."""
+
+    if re.search(r"\b(created|opened|submitted|received)\b", text):
+        return TicketTimeField.CREATED_AT
+    if re.search(r"\b(resolved|resolution|completed|closed)\b", text):
+        return TicketTimeField.RESOLVED_AT
+    return default
+
+
+def _extract_numeric_conditions(text: str) -> tuple[NumericConditionPlan, ...]:
+    """Extract every explicit numeric comparison stated in common ticket language."""
+
+    labels = {
+        "response time": FilterField.RESPONSE_TIME_HRS,
+        "resolution time": FilterField.RESOLUTION_TIME_HRS,
+        "customer rating": FilterField.CUSTOMER_RATING,
+        "satisfaction score": FilterField.CUSTOMER_RATING,
+        "rating": FilterField.CUSTOMER_RATING,
+    }
+    operators = {
+        "greater than": "gt",
+        "more than": "gt",
+        "above": "gt",
+        "over": "gt",
+        "at least": "gte",
+        "less than": "lt",
+        "below": "lt",
+        "under": "lt",
+        "at most": "lte",
+        "equal to": "eq",
+        "equals": "eq",
+        "of": "eq",
+    }
+    label_pattern = "|".join(
+        re.escape(label) for label in sorted(labels, key=len, reverse=True)
+    )
+    operator_pattern = "|".join(
+        re.escape(operator) for operator in sorted(operators, key=len, reverse=True)
+    )
+    pattern = re.compile(
+        rf"\b(?P<label>{label_pattern})\b\s*(?:is\s+)?"
+        rf"(?P<operator>{operator_pattern})\s*"
+        rf"(?P<value>\d+(?:\.\d+)?)\b"
+    )
+    conditions: list[NumericConditionPlan] = []
+    seen: set[tuple[FilterField, str, float]] = set()
+    for match in pattern.finditer(text):
+        field = labels[match.group("label")]
+        operator = operators[match.group("operator")]
+        value = float(match.group("value"))
+        key = (field, operator, value)
+        if key in seen:
+            continue
+        seen.add(key)
+        conditions.append(
+            NumericConditionPlan(field=field, operator=operator, value=value)
+        )
+    return tuple(conditions)
 
 
 def _validate_question(question: str, maximum_length: int) -> str:

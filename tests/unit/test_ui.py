@@ -277,3 +277,25 @@ def test_streamlit_displays_query_error_without_crashing() -> None:
 
     assert not app.exception
     assert any("Start Ollama" in item.value for item in app.error)
+
+
+def test_custom_reference_controls_appear_before_query_submission() -> None:
+    client = FakeUIAPI()
+    app = AppTest.from_function(
+        _streamlit_test_script,
+        args=(client,),
+        default_timeout=10,
+    ).run()
+
+    query_reference = next(
+        item
+        for item in app.selectbox
+        if item.label == "Reference time" and item.key == "query_reference_mode"
+    )
+    query_reference.select("custom")
+    app.run()
+
+    assert not app.exception
+    assert client.query_calls == []
+    assert any(item.label == "Reference date" for item in app.date_input)
+    assert any(item.label == "Reference clock time" for item in app.time_input)

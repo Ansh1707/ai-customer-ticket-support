@@ -116,8 +116,9 @@ the verified outputs are:
 | Average Technical customer rating | 3.7403846153846154 from 104 ratings across 152 tickets; displayed as 3.74 |
 | Resolution-time anomalies this week | TKT-108 at 119.7 hours, above the 48.15-hour IQR fence |
 
-Five held-out questions also passed live end-to-end evaluation, including multi-value
-priority filters, filtered lists, means, category rankings, and last-month dates.
+The expanded live end-to-end suite also covers multi-value and negated filters,
+multiple numeric conditions, exact ratings, top-N rankings, grouped output, explicit
+anomaly ranges, date-field precedence, paraphrases, and relative dates.
 
 ## Architecture
 
@@ -277,7 +278,7 @@ Run the separate Step 25 labeled evaluation while Ollama is running:
 python scripts/evaluate_qwen.py
 ```
 
-The 32-case benchmark includes all five assessment samples, 23 cases held out from
+The 39-case benchmark includes all five assessment samples, 30 cases outside the
 exact prompt examples, combined filters, rankings, aggregates, dates, literal search,
 anomalies, ambiguity, unsupported requests, and prompt injection. Expected
 interpretations and independently calculated answer evidence are stored in
@@ -300,10 +301,10 @@ python scripts/audit_repository.py
 
 Verification results:
 
-- 198 deterministic and integration tests passed; 24 live tests are skipped by default
-- 24 of 24 live `qwen2.5:3b` tests passed in 100.64 seconds
-- the final 32-case Qwen evaluation passed 32/32, including 23/23 held-out cases;
-  mean end-to-end latency was 5.12 seconds and P95 was 9.29 seconds
+- 205 deterministic and integration tests passed; 32 live tests are skipped by default
+- 32 of 32 live `qwen2.5:3b` tests passed in 120.05 seconds
+- the final 39-case Qwen evaluation passed 39/39, including all 30 cases outside the
+  exact prompt examples; mean end-to-end latency was 4.39 seconds and P95 was 7.67 seconds
 - exact pinned dependencies installed into a new Python 3.11 environment
 - Ruff, compilation, `pip check`, HTTP readiness, and graceful shutdown passed
 

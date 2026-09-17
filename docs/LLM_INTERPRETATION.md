@@ -61,7 +61,7 @@ No API key or paid service is used.
 ## Live verification
 
 The opt-in live suite calls the installed model when `RUN_LIVE_OLLAMA=1`. The latest
-complete run passed 24 interpreter, orchestration, and API checks in 100.64 seconds,
+complete run passed 32 interpreter, orchestration, and API checks in 120.05 seconds,
 including:
 
 - all five assessment sample questions;

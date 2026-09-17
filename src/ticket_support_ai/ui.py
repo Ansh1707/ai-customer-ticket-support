@@ -251,22 +251,21 @@ def _render_query_tab(client: TicketAPI) -> None:
         st.session_state.query_question = selected_sample
         st.rerun()
 
-    with st.form("query_form"):
-        question = st.text_area(
-            "Question",
-            key="query_question",
-            height=100,
-            max_chars=2000,
-        )
-        reference_mode, custom_reference = _reference_controls("query")
-        first, second = st.columns(2)
-        limit = first.number_input(
-            "Rows per page", min_value=1, max_value=100, value=50, step=1
-        )
-        offset = second.number_input(
-            "Offset", min_value=0, max_value=1_000_000, value=0, step=1
-        )
-        submitted = st.form_submit_button("Ask Qwen", type="primary")
+    question = st.text_area(
+        "Question",
+        key="query_question",
+        height=100,
+        max_chars=2000,
+    )
+    reference_mode, custom_reference = _reference_controls("query")
+    first, second = st.columns(2)
+    limit = first.number_input(
+        "Rows per page", min_value=1, max_value=100, value=50, step=1
+    )
+    offset = second.number_input(
+        "Offset", min_value=0, max_value=1_000_000, value=0, step=1
+    )
+    submitted = st.button("Ask Qwen", type="primary", key="submit_query")
 
     st.caption(
         "The supplied file is a current-status snapshot and cannot reconstruct "
@@ -354,33 +353,34 @@ def _render_analytics_result(data: dict[str, Any]) -> None:
 
 def _render_anomaly_tab(client: TicketAPI) -> None:
     st.subheader("Review explainable anomalies")
-    with st.form("anomaly_form"):
-        rule = st.selectbox(
-            "Rule",
-            tuple(ANOMALY_RULE_LABELS),
-            format_func=ANOMALY_RULE_LABELS.__getitem__,
-        )
-        period = st.selectbox(
-            "Date period",
-            tuple(PERIOD_LABELS),
-            format_func=PERIOD_LABELS.__getitem__,
-        )
-        time_field = st.selectbox(
-            "Date field",
-            tuple(TIME_FIELD_LABELS),
-            format_func=TIME_FIELD_LABELS.__getitem__,
-            disabled=not period,
-        )
-        reference_mode, custom_reference = _reference_controls("anomaly")
-        limit = st.slider("Rows per page", min_value=1, max_value=100, value=25)
-        offset = st.number_input(
-            "Offset",
-            min_value=0,
-            max_value=1_000_000,
-            value=0,
-            step=limit,
-        )
-        submitted = st.form_submit_button("Load anomalies", type="primary")
+    rule = st.selectbox(
+        "Rule",
+        tuple(ANOMALY_RULE_LABELS),
+        format_func=ANOMALY_RULE_LABELS.__getitem__,
+    )
+    period = st.selectbox(
+        "Date period",
+        tuple(PERIOD_LABELS),
+        format_func=PERIOD_LABELS.__getitem__,
+    )
+    time_field = st.selectbox(
+        "Date field",
+        tuple(TIME_FIELD_LABELS),
+        format_func=TIME_FIELD_LABELS.__getitem__,
+        disabled=not period,
+    )
+    reference_mode, custom_reference = _reference_controls("anomaly")
+    limit = st.slider("Rows per page", min_value=1, max_value=100, value=25)
+    offset = st.number_input(
+        "Offset",
+        min_value=0,
+        max_value=1_000_000,
+        value=0,
+        step=limit,
+    )
+    submitted = st.button(
+        "Load anomalies", type="primary", key="submit_anomalies"
+    )
 
     if submitted:
         params: dict[str, Any] = {

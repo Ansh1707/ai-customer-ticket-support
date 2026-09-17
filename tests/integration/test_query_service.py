@@ -119,6 +119,34 @@ def test_grouped_query_formats_leader_and_visible_date_range(database: Path) -> 
     assert "2024-04-01 00:00 to 2024-04-05 00:00" in result.answer
 
 
+def test_public_page_size_does_not_expand_semantic_top_n_limit(database: Path) -> None:
+    interpretation = AnalyticsRequest.model_validate(
+        {
+            "operation": "grouped_aggregate",
+            "aggregation": "count",
+            "group_by": "agent_id",
+            "filters": [{"field": "status", "operator": "eq", "value": "Resolved"}],
+            "sort": [{"field": "result", "direction": "desc"}],
+            "limit": 3,
+        }
+    )
+
+    result = run_query(
+        database,
+        "Show the top 3 agents by number of resolved tickets.",
+        interpretation,
+        limit=50,
+    )
+
+    assert isinstance(result.data, GroupedAnalyticsResult)
+    assert result.interpretation.limit == 3
+    assert [(row.group_value, row.value) for row in result.data.rows] == [
+        ("AGT-09", 37),
+        ("AGT-12", 37),
+        ("AGT-06", 34),
+    ]
+
+
 def test_list_and_aggregate_answers_retain_full_numeric_evidence(database: Path) -> None:
     list_request = AnalyticsRequest.model_validate(
         {
