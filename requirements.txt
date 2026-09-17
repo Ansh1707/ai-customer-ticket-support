@@ -1,0 +1,17 @@
+# Tested runtime: CPython 3.11.12 on Apple Silicon macOS
+# Install with: python -m pip install -r requirements.txt
+
+# Application dependencies
+fastapi==0.141.1
+uvicorn==0.53.0
+streamlit==1.64.0
+pydantic==2.13.5
+pandas==3.0.5
+httpx==0.28.1
+
+# Development and testing
+pytest==9.1.1
+ruff==0.16.8
+
+# SQLite is included with Python.
+# Ollama and qwen2.5:3b are installed separately.

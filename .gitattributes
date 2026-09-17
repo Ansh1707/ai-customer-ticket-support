@@ -1,0 +1,2 @@
+# Preserve the supplied assessment dataset byte-for-byte, including CRLF endings.
+support_tickets.csv -text -diff
