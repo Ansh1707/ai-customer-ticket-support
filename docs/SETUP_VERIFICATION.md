@@ -147,3 +147,8 @@ The local Step 29 content audit passes across the complete candidate file set. I
 confirms required source/data, exact dependency pins, the source checksum, file-size
 limits, absence of publishable environments/caches/databases/logs/model weights and
 absence of high-confidence credential patterns. The suite now passes 198 offline tests.
+
+The audited commit was published to the public repository
+`https://github.com/Ansh1707/ai-customer-ticket-support`. An unauthenticated GitHub API
+request confirmed public visibility and default branch `main`; an unauthenticated raw
+README download matched the local checksum, and local `HEAD` matched `origin/main`.

@@ -6,6 +6,8 @@ for every calculation. It validates and ingests the supplied 500-ticket CSV, ans
 natural-language questions, detects explainable anomalies, and exposes the same
 capabilities through FastAPI and Streamlit.
 
+Repository: [github.com/Ansh1707/ai-customer-ticket-support](https://github.com/Ansh1707/ai-customer-ticket-support)
+
 ## What it provides
 
 - Natural-language counts, lists, filters, averages, grouping, and rankings

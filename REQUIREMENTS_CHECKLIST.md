@@ -91,7 +91,7 @@ Status values: `NOT STARTED`, `IN PROGRESS`, `BLOCKED`, `PASS`, `FAIL`, `MANUAL`
 | R-01 | Working system. | All core functionality, API and UI requirements above. | Acceptance passed ingestion, 198 normal tests, 24 live Qwen tests, the 32-case Qwen benchmark, a real Streamlit-to-Qwen query, API/UI equivalence, clean startup and shutdown. | PASS |
 | R-02 | `README.md`. | Setup, architecture overview, model and tools, example queries with actual outputs, known limitations, tests and troubleshooting. | README contains all 14 Step 27 items, including tested hardware, exact model digests, Qwen Research License/source attribution, actual outputs and measured evaluation latency; its contract test passes. | PASS |
 | R-03 | `requirements.txt` or equivalent. | Tested runtime dependencies with reproducible versions. | Conventional `requirements.txt` contains exact tested direct versions and installed successfully in a new Python 3.11 environment. | PASS |
-| R-04 | GitHub repository. | Source, configuration examples, tests, README and permitted dataset artifacts; no secrets or generated noise. | Repository URL is accessible in a logged-out or evaluator-authorized check. | NOT STARTED |
+| R-04 | GitHub repository. | Source, configuration examples, tests, README and permitted dataset artifacts; no secrets or generated noise. | Public repository `https://github.com/Ansh1707/ai-customer-ticket-support` was verified through unauthenticated GitHub API and raw-file requests; local `HEAD` matches `origin/main`. | PASS |
 | R-05 | Example outputs. | Capture outputs from the final implementation rather than inventing them in advance. | README includes the five live-verified assessment outputs and summarizes the held-out evaluation. | PASS |
 | R-06 | Known limitations. | Explain snapshot dates, unavailable status history, local-model limits, expected scope and hardware-dependent latency. | README documents snapshot history, inferred dates, global baseline, compact-model behavior, local latency, supported scope and localhost-only security posture. | PASS |
 
@@ -112,7 +112,7 @@ These items require the candidate to perform or confirm them manually.
 | ID | Manual action | Evidence to retain | Status |
 |---|---|---|---|
 | M-01 | Confirm the assessment receipt timestamp and calculate the exact 48-hour deadline. | Received September 16, 2026 at 18:30 IST; deadline September 18, 2026 at 18:30 IST. | PASS |
-| M-02 | Create or confirm the GitHub repository and its visibility/access. | Repository URL tested from an appropriate account or logged-out session. | MANUAL |
+| M-02 | Create or confirm the GitHub repository and its visibility/access. | Public GitHub API reports `public`/`main`; unauthenticated raw README checksum matches local; local and remote commit IDs match. | PASS |
 | M-03 | Run the final clean-install rehearsal on the target Mac. | A new Python 3.11 environment installed the pinned file, passed all normal/live tests, and started/stopped both services successfully. | PASS |
 | M-04 | Confirm no secrets, local environments, model files, databases or unnecessary logs are committed. | Staged 72-file audit passed; ignored `.venv`, caches, `.DS_Store`, runtime database and bytecode were excluded, and both staged/worktree dataset checksums match. | PASS |
 | M-05 | Email the GitHub link to `RajathKumar@dotmappers.in`. | Sent-email record. | MANUAL |
