@@ -457,6 +457,7 @@ class AnalyticsRequest(BaseModel):
     group_by: GroupField | None = None
     sort: tuple[SortSpec, ...] = ()
     time_filter: TimeFilter | None = None
+    result_limit: int | None = Field(default=None, ge=1, le=100)
     limit: int = Field(default=50, ge=1, le=100)
     offset: int = Field(default=0, ge=0, le=1_000_000)
 
@@ -485,11 +486,12 @@ class AnalyticsRequest(BaseModel):
             if (
                 self.selected_fields
                 or self.sort
+                or self.result_limit is not None
                 or self.limit != 50
                 or self.offset != 0
                 or any(
-                value is not None
-                for value in (self.metric, self.aggregation, self.group_by)
+                    value is not None
+                    for value in (self.metric, self.aggregation, self.group_by)
                 )
             ):
                 raise ValueError(
@@ -501,6 +503,7 @@ class AnalyticsRequest(BaseModel):
                 self.selected_fields
                 or self.group_by is not None
                 or self.sort
+                or self.result_limit is not None
                 or self.limit != 50
                 or self.offset != 0
             ):
@@ -585,10 +588,7 @@ class UnsupportedRequest(BaseModel):
 
 
 QueryRequest: TypeAlias = Annotated[
-    AnalyticsRequest
-    | AnomalyQueryRequest
-    | ClarificationRequest
-    | UnsupportedRequest,
+    AnalyticsRequest | AnomalyQueryRequest | ClarificationRequest | UnsupportedRequest,
     Field(discriminator="intent"),
 ]
 
@@ -624,6 +624,7 @@ class ListAnalyticsResult(BaseModel):
     returned_count: int
     offset: int
     limit: int
+    result_limit: int | None = None
     truncated: bool
     reference_clock: ReferenceClock
     applied_date_range: DateRange | None = None
@@ -681,6 +682,7 @@ class GroupedAnalyticsResult(BaseModel):
     returned_count: int
     offset: int
     limit: int
+    result_limit: int | None = None
     ties_extended: bool
     truncated: bool
     reference_clock: ReferenceClock

@@ -33,7 +33,7 @@ Grouping is restricted to agent, category, priority or status. Numeric metrics a
 
 All filters in one request are combined with logical AND. Supported filter forms are:
 
-- exact equality;
+- exact equality and inequality;
 - membership such as High or Critical;
 - greater than, greater than or equal, less than, and less than or equal for numeric fields;
 - null and non-null checks for resolution time and customer rating;
@@ -55,15 +55,17 @@ A time filter selects either creation time or inferred resolution time. It conta
 
 The shared Step 7 date module converts this representation into a half-open range using the visible reference clock.
 
-## Selection sorting and limits
+## Selection, sorting and limits
 
 - List requests explicitly declare returned fields.
 - Grouped results can sort only by their group or calculated result.
 - Ticket lists cannot sort by an aggregate result.
 - Duplicate selected or sort fields are rejected.
-- Result limits range from 1 through 100 and default to 50.
-- List and grouped operations accept an offset from 0 through 1,000,000. Counts and
-  scalar aggregates are not paginated.
+- `result_limit` is optional and represents question meaning such as “top 3.” It
+  ranges from 1 through 100 and is applied before pagination.
+- `limit` is transport page size, ranges from 1 through 100 and defaults to 50.
+- List and grouped operations accept a transport `offset` from 0 through 1,000,000.
+  Counts and scalar aggregates accept neither kind of limit nor an offset.
 - List results include the full matching count before pagination. Grouped rankings
   include all groups tied at a result-ranked limit boundary.
 
@@ -102,13 +104,14 @@ Agent with the most inferred resolutions this month:
     "relative_period": "this_month"
   },
   "sort": [{"field": "result", "direction": "desc"}],
+  "result_limit": 1,
   "limit": 12
 }
 ```
 
 ## Verification
 
-Tests cover all four intents, every operation, every filter shape, relative and explicit dates, valid aggregations, grouping, sorting, field allowlists, limit boundaries, extra-field rejection and invalid semantic combinations. The generated JSON schema contains four top-level variants and does not expose raw SQL or Python execution fields.
+Tests cover all four intents, every operation, every filter shape, relative and explicit dates, valid aggregations, grouping, sorting, field allowlists, semantic-result and page-size boundaries, extra-field rejection and invalid semantic combinations. The generated JSON schema contains four top-level variants and does not expose raw SQL or Python execution fields.
 
 Step 9 translates only these validated requests into parameterized, read-only SQLite
 operations. Identifiers and SQL expressions come from fixed application allowlists;

@@ -155,9 +155,9 @@ untrusted interpretation step that cannot execute arbitrary SQL or mutate data.
 |---|---|
 | CSV ingestion | Validate the exact schema and preserve source-quality warnings |
 | SQLite snapshot | Store the checksum-identified dataset transactionally and serve read-only queries |
-| Qwen interpreter | Route intent and extract a bounded semantic plan; never calculate answers or execute SQL |
+| Qwen interpreter | Route intent and extract one bounded semantic plan with collection-based numeric conditions and a semantic result limit |
 | Pydantic contracts | Reject invalid or out-of-scope model output before execution |
-| Analytics engine | Apply allowlisted filters, dates, grouping, ranking and pagination deterministically |
+| Analytics engine | Apply allowlisted filters, dates and grouping; enforce semantic ranking before independent transport pagination |
 | Anomaly engine | Apply the documented IQR, overdue and source-timing rules with explanations |
 | FastAPI | Expose health, query and anomaly contracts with structured failures and diagnostics |
 | Streamlit | Call only FastAPI and render controls, evidence, warnings and pagination |
@@ -301,10 +301,10 @@ python scripts/audit_repository.py
 
 Verification results:
 
-- 205 deterministic and integration tests passed; 32 live tests are skipped by default
-- 32 of 32 live `qwen2.5:3b` tests passed in 120.05 seconds
+- 206 deterministic and integration tests passed; 32 live tests are skipped by default
+- 32 of 32 live `qwen2.5:3b` tests passed in 147.66 seconds
 - the final 39-case Qwen evaluation passed 39/39, including all 30 cases outside the
-  exact prompt examples; mean end-to-end latency was 4.39 seconds and P95 was 7.67 seconds
+  exact prompt examples; mean end-to-end latency was 5.82 seconds and P95 was 13.23 seconds
 - exact pinned dependencies installed into a new Python 3.11 environment
 - Ruff, compilation, `pip check`, HTTP readiness, and graceful shutdown passed
 

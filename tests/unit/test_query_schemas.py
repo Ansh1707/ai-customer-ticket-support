@@ -102,9 +102,7 @@ def test_aggregate_and_grouped_aggregate_contracts() -> None:
             "operation": "aggregate",
             "aggregation": "average",
             "metric": "customer_rating",
-            "filters": [
-                {"field": "category", "operator": "eq", "value": "Technical"}
-            ],
+            "filters": [{"field": "category", "operator": "eq", "value": "Technical"}],
         }
     )
     grouped = AnalyticsRequest.model_validate(
@@ -112,14 +110,13 @@ def test_aggregate_and_grouped_aggregate_contracts() -> None:
             "operation": "grouped_aggregate",
             "aggregation": "count",
             "group_by": "agent_id",
-            "filters": [
-                {"field": "status", "operator": "eq", "value": "Resolved"}
-            ],
+            "filters": [{"field": "status", "operator": "eq", "value": "Resolved"}],
             "time_filter": {
                 "field": "resolved_at",
                 "relative_period": "this_month",
             },
             "sort": [{"field": "result", "direction": "desc"}],
+            "result_limit": 1,
             "limit": 12,
         }
     )
@@ -127,13 +124,13 @@ def test_aggregate_and_grouped_aggregate_contracts() -> None:
     assert aggregate.aggregation is Aggregation.AVERAGE
     assert grouped.group_by is GroupField.AGENT_ID
     assert grouped.sort[0].field is SortField.RESULT
+    assert grouped.result_limit == 1
+    assert grouped.limit == 12
     assert grouped.metric is None
 
 
 def test_non_analytics_intents_are_discriminated() -> None:
-    anomaly = parse_query_request(
-        {"intent": "anomalies", "rule": "long_resolution"}
-    )
+    anomaly = parse_query_request({"intent": "anomalies", "rule": "long_resolution"})
     clarification = parse_query_request(
         {
             "intent": "clarification",

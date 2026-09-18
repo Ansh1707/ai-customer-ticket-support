@@ -101,10 +101,10 @@ Question: How many critical tickets are unresolved?
 JSON: {"intent":"analytics","operation":"count","filters":[{"field":"priority","operator":"eq","value":"Critical"},{"field":"status","operator":"in","values":["Open","Escalated"]}]}
 
 Question: Which agent has the lowest average customer rating?
-JSON: {"intent":"analytics","operation":"grouped_aggregate","aggregation":"average","metric":"customer_rating","group_by":"agent_id","sort":[{"field":"result","direction":"asc"}],"limit":1}
+JSON: {"intent":"analytics","operation":"grouped_aggregate","aggregation":"average","metric":"customer_rating","group_by":"agent_id","sort":[{"field":"result","direction":"asc"}],"result_limit":1}
 
 Question: Show me all Critical tickets not resolved within 12 hours.
-JSON: {"intent":"analytics","operation":"list","selected_fields":["ticket_id","created_at","priority","status","resolution_time_hrs","unresolved_age_hrs","resolution_elapsed_hrs","agent_id","issue_summary"],"filters":[{"field":"priority","operator":"eq","value":"Critical"},{"field":"resolution_elapsed_hrs","operator":"gt","value":12}],"sort":[{"field":"resolution_elapsed_hrs","direction":"desc"}],"limit":100}
+JSON: {"intent":"analytics","operation":"list","selected_fields":["ticket_id","created_at","priority","status","resolution_time_hrs","unresolved_age_hrs","resolution_elapsed_hrs","agent_id","issue_summary"],"filters":[{"field":"priority","operator":"eq","value":"Critical"},{"field":"resolution_elapsed_hrs","operator":"gt","value":12}],"sort":[{"field":"resolution_elapsed_hrs","direction":"desc"}]}
 
 Question: Are there anomalies in resolution times this week?
 JSON: {"intent":"anomalies","rule":"long_resolution","time_filter":{"field":"resolved_at","relative_period":"this_week"}}
@@ -129,7 +129,7 @@ Rules:
 - not resolved within N hours -> resolution_elapsed_hrs gt N
 - Preserve every numeric condition. A question may contain more than one condition.
 - "not Critical" excludes Critical; do not convert negation into equality.
-- "top N" ranks by the requested result descending and sets limit=N.
+- "top N" ranks by the requested result descending and sets result_limit=N.
 - show/list requests -> operation=list
 - this/last week or month must populate relative_period; use resolved_at when the
   wording is about resolved tickets and created_at for general ticket dates
@@ -143,10 +143,10 @@ Question: How many tickets are currently open?
 Plan: {"operation":"count","statuses":["Open"]}
 
 Question: Which agent resolved the most tickets this month?
-Plan: {"operation":"grouped_aggregate","statuses":["Resolved"],"aggregation":"count","group_by":"agent_id","time_field":"resolved_at","relative_period":"this_month","sort_field":"result","sort_direction":"desc","limit":1}
+Plan: {"operation":"grouped_aggregate","statuses":["Resolved"],"aggregation":"count","group_by":"agent_id","time_field":"resolved_at","relative_period":"this_month","sort_field":"result","sort_direction":"desc","result_limit":1}
 
 Question: Show me all Critical tickets not resolved within 12 hours.
-Plan: {"operation":"list","priorities":["Critical"],"threshold_field":"resolution_elapsed_hrs","threshold_operator":"gt","threshold_value":12,"sort_field":"resolution_elapsed_hrs","sort_direction":"desc","limit":100}
+Plan: {"operation":"list","priorities":["Critical"],"numeric_conditions":[{"field":"resolution_elapsed_hrs","operator":"gt","value":12}],"sort_field":"resolution_elapsed_hrs","sort_direction":"desc"}
 
 Question: What is the average customer rating for Technical category tickets?
 Plan: {"operation":"aggregate","categories":["Technical"],"aggregation":"average","metric":"customer_rating"}
@@ -235,9 +235,6 @@ class AnalyticsPlan(BaseModel):
     ticket_ids: tuple[str, ...] = ()
     agent_ids: tuple[str, ...] = ()
     summary_contains: str | None = None
-    threshold_field: FilterField | None = None
-    threshold_operator: Literal["gt", "gte", "lt", "lte"] | None = None
-    threshold_value: float | None = None
     numeric_conditions: tuple[NumericConditionPlan, ...] = ()
     aggregation: Aggregation | None = None
     metric: MetricField | None = None
@@ -248,7 +245,7 @@ class AnalyticsPlan(BaseModel):
     end_date: date | None = None
     sort_field: SortField | None = None
     sort_direction: SortDirection | None = None
-    limit: int = Field(default=50, ge=1, le=100)
+    result_limit: int | None = Field(default=None, ge=1, le=100)
 
 
 _ROUTE_ADAPTER = TypeAdapter(IntentRoute)
@@ -315,11 +312,7 @@ class OllamaInterpreter:
             {"role": "user", "content": normalized},
         ]
         structured = await self._structured_call(messages, adapter)
-        if isinstance(structured, AnalyticsPlan):
-            return _compile_analytics_plan(structured, normalized)
-        if isinstance(structured, AnomalyQueryRequest):
-            return _preserve_anomaly_request(structured, normalized)
-        return structured
+        return _reconcile_interpretation(structured, normalized)
 
     async def _structured_call(
         self,
@@ -389,7 +382,9 @@ class OllamaInterpreter:
             service_available=True,
             model_available=available,
             version=str(version_payload.get("version", "")) or None,
-            error=None if available else f"Model {self.settings.model!r} is not installed.",
+            error=None
+            if available
+            else f"Model {self.settings.model!r} is not installed.",
         )
 
     async def _chat(
@@ -475,13 +470,23 @@ class OllamaInterpreter:
         return payload
 
 
-def _compile_analytics_plan(
-    plan: AnalyticsPlan,
+def _reconcile_interpretation(
+    structured: AnalyticsPlan | QueryRequest,
     question: str,
-) -> AnalyticsRequest:
-    """Add explicit-text safeguards and compile to the strict execution contract."""
+) -> QueryRequest:
+    """Apply the single documented semantic-precedence boundary."""
 
-    plan = _preserve_explicit_constraints(plan, question)
+    if isinstance(structured, AnalyticsPlan):
+        return _compile_analytics_plan(
+            _preserve_explicit_constraints(structured, question)
+        )
+    if isinstance(structured, AnomalyQueryRequest):
+        return _preserve_anomaly_request(structured, question)
+    return structured
+
+
+def _compile_analytics_plan(plan: AnalyticsPlan) -> AnalyticsRequest:
+    """Compile one reconciled model plan to the strict execution contract."""
     filters: list[dict[str, Any]] = []
     _append_set_filter(filters, "category", plan.categories)
     _append_set_filter(filters, "priority", plan.priorities)
@@ -507,22 +512,6 @@ def _compile_analytics_plan(
                 "value": condition.value,
             }
         )
-    threshold_parts = (
-        plan.threshold_field,
-        plan.threshold_operator,
-        plan.threshold_value,
-    )
-    if all(value is not None for value in threshold_parts) and not any(
-        item.field == plan.threshold_field for item in plan.numeric_conditions
-    ):
-        filters.append(
-            {
-                "field": plan.threshold_field,
-                "operator": plan.threshold_operator,
-                "value": plan.threshold_value,
-            }
-        )
-
     payload: dict[str, Any] = {
         "operation": plan.operation,
         "filters": filters,
@@ -545,7 +534,7 @@ def _compile_analytics_plan(
 
     if plan.operation is AnalyticsOperation.LIST:
         payload["selected_fields"] = tuple(OutputField)
-        payload["limit"] = plan.limit
+        payload["result_limit"] = plan.result_limit
         if plan.sort_field is not None and plan.sort_field is not SortField.RESULT:
             payload["sort"] = [
                 {
@@ -561,7 +550,7 @@ def _compile_analytics_plan(
         payload["group_by"] = plan.group_by
         if plan.aggregation is not Aggregation.COUNT:
             payload["metric"] = plan.metric
-        payload["limit"] = plan.limit
+        payload["result_limit"] = plan.result_limit
         if plan.sort_field is not None:
             payload["sort"] = [
                 {
@@ -702,8 +691,10 @@ def _preserve_explicit_constraints(
         "december",
     )
     has_explicit_date = re.search(r"\b\d{4}-\d{2}-\d{2}\b", lowered) is not None
-    if not matched_period and not has_explicit_date and not any(
-        cue in lowered for cue in temporal_cues
+    if (
+        not matched_period
+        and not has_explicit_date
+        and not any(cue in lowered for cue in temporal_cues)
     ):
         updates.update(
             time_field=None,
@@ -721,22 +712,6 @@ def _preserve_explicit_constraints(
             time_field=_explicit_time_field(lowered),
         )
 
-    threshold_match = re.search(
-        r"not resolved within\s+(\d+(?:\.\d+)?)\s*hours?",
-        lowered,
-    )
-    if threshold_match:
-        updates.update(
-            threshold_field=FilterField.RESOLUTION_ELAPSED_HRS,
-            threshold_operator="gt",
-            threshold_value=float(threshold_match.group(1)),
-        )
-    else:
-        updates.update(
-            threshold_field=None,
-            threshold_operator=None,
-            threshold_value=None,
-        )
     updates["numeric_conditions"] = _extract_numeric_conditions(lowered)
 
     rating_language = "customer rating" in lowered or "satisfaction" in lowered
@@ -751,9 +726,14 @@ def _preserve_explicit_constraints(
         for phrase in ("which category", "by category", "per category", "each category")
     ):
         requested_group = GroupField.CATEGORY
-    elif any(phrase in lowered for phrase in ("which priority", "by priority", "per priority")):
+    elif any(
+        phrase in lowered
+        for phrase in ("which priority", "by priority", "per priority")
+    ):
         requested_group = GroupField.PRIORITY
-    elif any(phrase in lowered for phrase in ("which status", "by status", "per status")):
+    elif any(
+        phrase in lowered for phrase in ("which status", "by status", "per status")
+    ):
         requested_group = GroupField.STATUS
     elif "agent" in lowered or "who" in lowered:
         requested_group = GroupField.AGENT_ID
@@ -772,7 +752,7 @@ def _preserve_explicit_constraints(
         updates["operation"] = AnalyticsOperation.GROUPED_AGGREGATE
         updates["group_by"] = requested_group
         updates["sort_field"] = SortField.RESULT
-        updates["limit"] = 1
+        updates["result_limit"] = 1
     if "resolved the most" in lowered:
         updates["aggregation"] = Aggregation.COUNT
         updates["statuses"] = (TicketStatus.RESOLVED,)
@@ -787,7 +767,7 @@ def _preserve_explicit_constraints(
             if top_match.group(1) == "top"
             else SortDirection.ASCENDING
         )
-        updates["limit"] = min(100, max(1, int(top_match.group(2))))
+        updates["result_limit"] = min(100, max(1, int(top_match.group(2))))
         if "resolved" in lowered:
             updates["statuses"] = (TicketStatus.RESOLVED,)
     if requested_group is not None and "count" in lowered:
@@ -809,8 +789,10 @@ def _preserve_explicit_constraints(
         updates["operation"] = AnalyticsOperation.COUNT
     if requested_group is None and lowered.startswith(("show ", "list ")):
         updates["operation"] = AnalyticsOperation.LIST
-    if "all " in lowered and updates.get("operation") is AnalyticsOperation.LIST:
-        updates["limit"] = 100
+    if top_match is None and not any(
+        word in lowered for word in ("most", "highest", "lowest", "worst", "best")
+    ):
+        updates["result_limit"] = None
 
     return plan.model_copy(update=updates)
 
@@ -914,10 +896,13 @@ def _contains_word(text: str, value: str) -> bool:
 
 
 def _is_negated_value(text: str, value: str) -> bool:
-    return re.search(
-        rf"\b(?:not|except|excluding|exclude)\s+(?:a\s+)?{re.escape(value)}\b",
-        text,
-    ) is not None
+    return (
+        re.search(
+            rf"\b(?:not|except|excluding|exclude)\s+(?:a\s+)?{re.escape(value)}\b",
+            text,
+        )
+        is not None
+    )
 
 
 def _explicit_time_field(
@@ -971,6 +956,21 @@ def _extract_numeric_conditions(text: str) -> tuple[NumericConditionPlan, ...]:
     )
     conditions: list[NumericConditionPlan] = []
     seen: set[tuple[FilterField, str, float]] = set()
+    unresolved_match = re.search(
+        r"not resolved within\s+(\d+(?:\.\d+)?)\s*hours?",
+        text,
+    )
+    if unresolved_match is not None:
+        value = float(unresolved_match.group(1))
+        key = (FilterField.RESOLUTION_ELAPSED_HRS, "gt", value)
+        seen.add(key)
+        conditions.append(
+            NumericConditionPlan(
+                field=FilterField.RESOLUTION_ELAPSED_HRS,
+                operator="gt",
+                value=value,
+            )
+        )
     for match in pattern.finditer(text):
         field = labels[match.group("label")]
         operator = operators[match.group("operator")]

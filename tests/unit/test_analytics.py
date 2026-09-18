@@ -185,7 +185,7 @@ def test_grouped_average_returns_deterministic_lowest_agent(
                 "metric": "customer_rating",
                 "group_by": "agent_id",
                 "sort": [{"field": "result", "direction": "asc"}],
-                "limit": 1,
+                "result_limit": 1,
             }
         ),
         clock,
@@ -209,7 +209,7 @@ def test_relative_resolution_periods_rank_agents_correctly(
         "group_by": "agent_id",
         "filters": [{"field": "status", "operator": "eq", "value": "Resolved"}],
         "sort": [{"field": "result", "direction": "desc"}],
-        "limit": 1,
+        "result_limit": 1,
     }
     this_month = execute_analytics(
         database,
@@ -277,9 +277,7 @@ def test_critical_tickets_over_twelve_elapsed_hours_include_unresolved_age(
                         "value": 12,
                     },
                 ],
-                "sort": [
-                    {"field": "resolution_elapsed_hrs", "direction": "desc"}
-                ],
+                "sort": [{"field": "resolution_elapsed_hrs", "direction": "desc"}],
                 "limit": 100,
             }
         ),
@@ -508,7 +506,7 @@ def test_result_ranking_keeps_all_groups_tied_at_limit(
                 "aggregation": "count",
                 "group_by": "category",
                 "sort": [{"field": "result", "direction": "desc"}],
-                "limit": 1,
+                "result_limit": 1,
             }
         ),
         clock,

@@ -28,6 +28,7 @@ from ticket_support_ai.llm import (
     _preserve_anomaly_request,
     _preserve_explicit_constraints,
     _preserve_safe_route,
+    _reconcile_interpretation,
 )
 from ticket_support_ai.schemas import (
     AnalyticsOperation,
@@ -275,7 +276,8 @@ def test_explicit_grouping_metric_and_ranking_override_a_weak_model_plan() -> No
     assert result.operation is AnalyticsOperation.GROUPED_AGGREGATE
     assert result.group_by is GroupField.CATEGORY
     assert result.metric is MetricField.RESPONSE_TIME_HRS
-    assert result.limit == 1
+    assert result.result_limit == 1
+    assert result.limit == 50
 
 
 def test_explicit_open_status_is_preserved_when_words_are_separated() -> None:
@@ -309,12 +311,16 @@ def test_explicit_open_status_is_preserved_when_words_are_separated() -> None:
     run(client.aclose())
 
     assert isinstance(result, AnalyticsRequest)
-    status_filter = next(item for item in result.filters if item.field is FilterField.STATUS)
+    status_filter = next(
+        item for item in result.filters if item.field is FilterField.STATUS
+    )
     assert status_filter.value == TicketStatus.OPEN.value
     assert result.time_filter is None
 
 
-def test_explicit_constraints_remove_unstated_model_filters_and_preserve_grouping() -> None:
+def test_explicit_constraints_remove_unstated_model_filters_and_preserve_grouping() -> (
+    None
+):
     weak_plan = AnalyticsPlan(
         operation="list",
         priorities=("High", "Medium"),
@@ -346,15 +352,20 @@ def test_explicit_english_date_range_and_safe_route_cues_are_deterministic() -> 
         "tickets from march 1 through march 31, 2024"
     ) == (date(2024, 3, 1), date(2024, 3, 31))
     analytics = IntentRoute(intent=QueryIntent.ANALYTICS)
-    assert _preserve_safe_route(
-        analytics, "Predict how many tickets will arrive next month."
-    ).intent is QueryIntent.UNSUPPORTED
-    assert _preserve_safe_route(
-        analytics, "What about those tickets?"
-    ).intent is QueryIntent.CLARIFICATION
-    assert _preserve_safe_route(
-        analytics, "Find overdue unresolved High tickets."
-    ).intent is QueryIntent.ANOMALIES
+    assert (
+        _preserve_safe_route(
+            analytics, "Predict how many tickets will arrive next month."
+        ).intent
+        is QueryIntent.UNSUPPORTED
+    )
+    assert (
+        _preserve_safe_route(analytics, "What about those tickets?").intent
+        is QueryIntent.CLARIFICATION
+    )
+    assert (
+        _preserve_safe_route(analytics, "Find overdue unresolved High tickets.").intent
+        is QueryIntent.ANOMALIES
+    )
 
     request = AnomalyQueryRequest(
         rule="overdue_high_priority",
@@ -389,18 +400,14 @@ def test_negation_and_unresolved_synonyms_are_preserved_deterministically() -> N
         "How many tickets are still awaiting resolution?",
     )
 
-    negated_request = _compile_analytics_plan(
-        negated, "How many tickets are not Critical?"
-    )
-    awaiting_request = _compile_analytics_plan(
-        awaiting, "How many tickets are still awaiting resolution?"
-    )
+    negated_request = _compile_analytics_plan(negated)
+    awaiting_request = _compile_analytics_plan(awaiting)
 
     assert negated.priorities == ()
     assert negated.excluded_priorities == ("Critical",)
-    assert [(item.field, item.operator, item.value) for item in negated_request.filters] == [
-        (FilterField.PRIORITY, "ne", "Critical")
-    ]
+    assert [
+        (item.field, item.operator, item.value) for item in negated_request.filters
+    ] == [(FilterField.PRIORITY, "ne", "Critical")]
     assert awaiting.statuses == (TicketStatus.OPEN, TicketStatus.ESCALATED)
     assert awaiting_request.filters[0].operator == "in"
 
@@ -413,15 +420,9 @@ def test_all_explicit_numeric_conditions_are_preserved() -> None:
             "customer rating below 3?"
         ),
     )
-    question = (
-        "How many tickets have response time greater than 2 hours and "
-        "customer rating below 3?"
-    )
-    request = _compile_analytics_plan(corrected, question)
+    request = _compile_analytics_plan(corrected)
 
-    assert [
-        (item.field, item.operator, item.value) for item in request.filters
-    ] == [
+    assert [(item.field, item.operator, item.value) for item in request.filters] == [
         (FilterField.RESPONSE_TIME_HRS, "gt", 2.0),
         (FilterField.CUSTOMER_RATING, "lt", 3.0),
     ]
@@ -430,12 +431,10 @@ def test_all_explicit_numeric_conditions_are_preserved() -> None:
         AnalyticsPlan(operation="count"),
         "How many tickets have a customer rating of 1?",
     )
-    rating_request = _compile_analytics_plan(
-        rating, "How many tickets have a customer rating of 1?"
-    )
-    assert [(item.field, item.operator, item.value) for item in rating_request.filters] == [
-        (FilterField.CUSTOMER_RATING, "eq", 1.0)
-    ]
+    rating_request = _compile_analytics_plan(rating)
+    assert [
+        (item.field, item.operator, item.value) for item in rating_request.filters
+    ] == [(FilterField.CUSTOMER_RATING, "eq", 1.0)]
 
 
 def test_created_date_language_wins_over_resolved_status_language() -> None:
@@ -466,13 +465,28 @@ def test_top_n_ranking_keeps_requested_semantic_limit() -> None:
         AnalyticsPlan(operation="list"),
         "Show the top 3 agents by number of resolved tickets.",
     )
-    request = _compile_analytics_plan(
-        corrected, "Show the top 3 agents by number of resolved tickets."
-    )
+    request = _compile_analytics_plan(corrected)
 
     assert request.operation is AnalyticsOperation.GROUPED_AGGREGATE
     assert request.group_by is GroupField.AGENT_ID
     assert request.aggregation.value == "count"
     assert request.sort[0].field.value == "result"
     assert request.sort[0].direction.value == "desc"
-    assert request.limit == 3
+    assert request.result_limit == 3
+    assert request.limit == 50
+
+
+def test_reconciliation_is_the_only_literal_preservation_boundary() -> None:
+    question = "Show Critical tickets not resolved within 12 hours."
+    request = _reconcile_interpretation(
+        AnalyticsPlan(operation="list", statuses=("Resolved",)),
+        question,
+    )
+
+    assert isinstance(request, AnalyticsRequest)
+    assert request.limit == 50
+    assert request.result_limit is None
+    assert [(item.field, item.operator, item.value) for item in request.filters] == [
+        (FilterField.PRIORITY, "eq", "Critical"),
+        (FilterField.RESOLUTION_ELAPSED_HRS, "gt", 12.0),
+    ]

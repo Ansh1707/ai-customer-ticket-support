@@ -18,12 +18,25 @@ This design is based on live evidence. Supplying the 3B model with one large uni
 schema produced valid JSON but repeatedly selected the anomaly branch for ordinary
 analytics questions. Separating routing from extraction removed that branch bias.
 
-The compact analytics plan captures categorical filters, numeric thresholds, metric,
-aggregation, grouping, date semantics, sorting and limit. A deterministic preservation
-layer rechecks literal constraints in the question, including named categories and
-priorities, unresolved status, calendar periods, “not resolved within N hours,” rating
-metrics and ranking direction. The compiled request must then pass the same Pydantic
-validation used by the deterministic executor.
+The compact analytics plan captures categorical filters, a collection of numeric
+conditions, metric, aggregation, grouping, date semantics, sorting and a semantic
+result limit. Numeric equality and multiple comparisons use the same collection-based
+contract; there is no narrower single-threshold compatibility path.
+
+All detail plans pass through one reconciliation boundary before compilation. Its
+precedence is explicit:
+
+1. Literal user constraints win for values, negation, numbers, dates and requested
+   result count.
+2. Deterministic scope and safety rules correct unsupported or contradictory model
+   structure.
+3. Schema-valid Qwen choices supply semantic details the user did not state.
+4. Contract defaults fill only fields still absent.
+
+The reconciled plan is compiled once and must pass the same Pydantic validation used
+by the deterministic executor. The router has one separate responsibility: selecting
+the detail schema. It does not calculate filters or results. API pagination is applied
+after interpretation and cannot replace the question's semantic result limit.
 
 ## Model controls
 
@@ -61,7 +74,7 @@ No API key or paid service is used.
 ## Live verification
 
 The opt-in live suite calls the installed model when `RUN_LIVE_OLLAMA=1`. The latest
-complete run passed 32 interpreter, orchestration, and API checks in 120.05 seconds,
+complete run passed 32 interpreter, orchestration, and API checks in 147.66 seconds,
 including:
 
 - all five assessment sample questions;

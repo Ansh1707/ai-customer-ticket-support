@@ -82,8 +82,8 @@ These are smoke-test measurements on one machine, not final application benchmar
   and stops only launcher-owned processes. The final isolated-port run reached ready
   status, returned all 28 data-quality findings, and released both ports on Ctrl+C.
 
-Latest verification: 205 deterministic/integration tests passed, Ruff and dependency
-checks passed, and all 32 live `qwen2.5:3b` tests passed in 120.05 seconds.
+Latest verification: 206 deterministic/integration tests passed, Ruff and dependency
+checks passed, and all 32 live `qwen2.5:3b` tests passed in 147.66 seconds.
 
 ## Step 22 diagnostics status
 

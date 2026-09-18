@@ -51,7 +51,8 @@ Show the README Mermaid diagram and trace one question:
 1. Streamlit sends the standalone question to FastAPI.
 2. Qwen performs two schema-constrained stages: intent routing and compact plan
    extraction at temperature 0 and seed 0.
-3. Pydantic and deterministic semantic safeguards reject or correct unsafe structure.
+3. One reconciliation boundary applies literal-user, safety, model and default
+   precedence, then Pydantic rejects invalid structure.
 4. The analytics engine builds an allowlisted, parameterized, read-only query.
 5. SQLite returns typed evidence; Python formats the answer.
 
@@ -102,11 +103,11 @@ the already captured output in the README rather than repeatedly submitting.
 
 Show the README testing section and reports rather than running long suites live:
 
-- 205 deterministic/integration tests;
+- 206 deterministic/integration tests;
 - 32/32 live-Qwen tests;
 - 39/39 labeled evaluation cases, including all five assessment samples and 30 cases
   outside the exact prompt examples;
-- 4.39-second mean and 7.67-second P95 evaluation latency;
+- 5.82-second mean and 13.23-second P95 evaluation latency;
 - final clean-environment install, startup and shutdown rehearsal.
 
 Describe failure behavior:

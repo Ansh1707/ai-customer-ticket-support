@@ -132,7 +132,9 @@ class QueryService:
             }:
                 answer += _reference_suffix(reference_clock.timestamp)
         else:  # pragma: no cover - closed union guard for future schema additions
-            raise TypeError(f"Unsupported interpretation type: {type(interpretation)!r}")
+            raise TypeError(
+                f"Unsupported interpretation type: {type(interpretation)!r}"
+            )
         execution_ms = _elapsed_ms(execution_started)
 
         return NaturalLanguageQueryResult(
@@ -163,18 +165,20 @@ def _apply_public_paging(
         return AnomalyQueryRequest.model_validate(
             {
                 **interpretation.model_dump(),
-                "limit": min(interpretation.limit, limit),
+                "limit": limit,
                 "offset": offset,
             }
         )
-    if isinstance(interpretation, AnalyticsRequest) and interpretation.operation.value in {
+    if isinstance(
+        interpretation, AnalyticsRequest
+    ) and interpretation.operation.value in {
         "list",
         "grouped_aggregate",
     }:
         return AnalyticsRequest.model_validate(
             {
                 **interpretation.model_dump(),
-                "limit": min(interpretation.limit, limit),
+                "limit": limit,
                 "offset": offset,
             }
         )
@@ -242,9 +246,7 @@ def _format_analytics_answer(
             direction = request.sort[0].direction
             label = "highest" if direction is SortDirection.DESCENDING else "lowest"
             boundary = result.rows[0].value
-            leaders = [
-                row.group_value for row in result.rows if row.value == boundary
-            ]
+            leaders = [row.group_value for row in result.rows if row.value == boundary]
             group_label = result.group_by.value.replace("_", " ")
             metric = (
                 "ticket count"

@@ -92,15 +92,13 @@ def test_grouped_query_formats_leader_and_visible_date_range(database: Path) -> 
             "operation": "grouped_aggregate",
             "aggregation": "count",
             "group_by": "agent_id",
-            "filters": [
-                {"field": "status", "operator": "eq", "value": "Resolved"}
-            ],
+            "filters": [{"field": "status", "operator": "eq", "value": "Resolved"}],
             "time_filter": {
                 "field": "resolved_at",
                 "relative_period": "this_month",
             },
             "sort": [{"field": "result", "direction": "desc"}],
-            "limit": 1,
+            "result_limit": 1,
         }
     )
 
@@ -127,7 +125,7 @@ def test_public_page_size_does_not_expand_semantic_top_n_limit(database: Path) -
             "group_by": "agent_id",
             "filters": [{"field": "status", "operator": "eq", "value": "Resolved"}],
             "sort": [{"field": "result", "direction": "desc"}],
-            "limit": 3,
+            "result_limit": 3,
         }
     )
 
@@ -139,15 +137,39 @@ def test_public_page_size_does_not_expand_semantic_top_n_limit(database: Path) -
     )
 
     assert isinstance(result.data, GroupedAnalyticsResult)
-    assert result.interpretation.limit == 3
+    assert result.interpretation.result_limit == 3
+    assert result.interpretation.limit == 50
     assert [(row.group_value, row.value) for row in result.data.rows] == [
         ("AGT-09", 37),
         ("AGT-12", 37),
         ("AGT-06", 34),
     ]
 
+    first_page = run_query(
+        database,
+        "Show the top 3 agents by number of resolved tickets.",
+        interpretation,
+        limit=2,
+    )
+    second_page = run_query(
+        database,
+        "Show the top 3 agents by number of resolved tickets.",
+        interpretation,
+        limit=2,
+        offset=2,
+    )
 
-def test_list_and_aggregate_answers_retain_full_numeric_evidence(database: Path) -> None:
+    assert isinstance(first_page.data, GroupedAnalyticsResult)
+    assert isinstance(second_page.data, GroupedAnalyticsResult)
+    assert first_page.interpretation.result_limit == 3
+    assert first_page.interpretation.limit == 2
+    assert [row.group_value for row in first_page.data.rows] == ["AGT-09", "AGT-12"]
+    assert [row.group_value for row in second_page.data.rows] == ["AGT-06"]
+
+
+def test_list_and_aggregate_answers_retain_full_numeric_evidence(
+    database: Path,
+) -> None:
     list_request = AnalyticsRequest.model_validate(
         {
             "operation": "list",
@@ -172,9 +194,7 @@ def test_list_and_aggregate_answers_retain_full_numeric_evidence(database: Path)
             "operation": "aggregate",
             "aggregation": "average",
             "metric": "customer_rating",
-            "filters": [
-                {"field": "category", "operator": "eq", "value": "Technical"}
-            ],
+            "filters": [{"field": "category", "operator": "eq", "value": "Technical"}],
         }
     )
 
@@ -217,9 +237,7 @@ def test_anomaly_query_dispatches_to_deterministic_engine(database: Path) -> Non
     assert isinstance(result.data, AnomalyDetectionResult)
     assert result.data.matching_ticket_count == 1
     assert result.data.tickets[0].ticket_id == "TKT-108"
-    assert result.answer.startswith(
-        "Found 1 anomalous ticket (1 long-resolution)."
-    )
+    assert result.answer.startswith("Found 1 anomalous ticket (1 long-resolution).")
     assert "this week" in result.answer
 
 

@@ -57,8 +57,10 @@ implemented in `database.py`, and shared reference-clock behavior is implemented
 models. `analytics.py` converts validated requests into parameterized read-only SQLite
 queries. `anomalies.py` applies the documented IQR and overdue high-priority rules and
 returns explainable, paginated findings. `config.py` owns validated Ollama settings,
-and `llm.py` performs two-stage schema-constrained Qwen interpretation and compiles
-compact semantic plans into the strict request contract. `query.py` resolves the
+and `llm.py` performs two-stage schema-constrained Qwen interpretation, reconciles
+explicit text once under documented precedence, and compiles compact semantic plans
+into the strict request contract. Semantic `result_limit` remains separate from the
+transport `limit` and `offset` applied in `query.py`. That module also resolves the
 reference clock, routes validated requests to deterministic engines and formats typed
 results without asking the model to calculate or narrate them. `api.py` exposes these
 services through validated FastAPI health, query and anomaly contracts with typed,

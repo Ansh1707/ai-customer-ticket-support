@@ -34,9 +34,7 @@ from ticket_support_ai.schemas import (
     TicketTimeField,
 )
 
-_RESOLVED_AT_SQL = (
-    "datetime(t.created_at, '+' || t.resolution_time_hrs || ' hours')"
-)
+_RESOLVED_AT_SQL = "datetime(t.created_at, '+' || t.resolution_time_hrs || ' hours')"
 _UNRESOLVED_AGE_SQL = """
 CASE
     WHEN t.status IN ('Open', 'Escalated')
@@ -251,9 +249,14 @@ def _execute_list(
         f"{_OUTPUT_SQL[field]} AS {field.value}" for field in request.selected_fields
     )
     order_sql = _list_order_sql(request)
+    semantic_count = min(
+        matching_count,
+        request.result_limit if request.result_limit is not None else matching_count,
+    )
+    page_size = min(request.limit, max(0, semantic_count - request.offset))
     query_params = {
         **params,
-        "result_limit": request.limit,
+        "result_limit": page_size,
         "result_offset": request.offset,
     }
     rows = connection.execute(
@@ -277,6 +280,7 @@ def _execute_list(
         returned_count=len(result_rows),
         offset=request.offset,
         limit=request.limit,
+        result_limit=request.result_limit,
         truncated=request.offset + len(result_rows) < matching_count,
         reference_clock=reference_clock,
         applied_date_range=applied_range,
@@ -314,7 +318,9 @@ def _execute_aggregate(
     metric = request.metric
     aggregation = request.aggregation
     if metric is None or aggregation is None or aggregation is Aggregation.COUNT:
-        raise ValueError("Validated aggregate request is missing metric or aggregation.")
+        raise ValueError(
+            "Validated aggregate request is missing metric or aggregation."
+        )
     metric_sql = _METRIC_SQL[metric.value]
     function_sql = _AGGREGATION_SQL[aggregation]
     row = connection.execute(
@@ -350,7 +356,9 @@ def _execute_grouped(
     group_by = request.group_by
     aggregation = request.aggregation
     if group_by is None or aggregation is None:
-        raise ValueError("Validated grouped request is missing grouping or aggregation.")
+        raise ValueError(
+            "Validated grouped request is missing grouping or aggregation."
+        )
     group_sql = _GROUP_SQL[group_by]
     if aggregation is Aggregation.COUNT:
         value_sql = "COUNT(*)"
@@ -384,7 +392,10 @@ def _execute_grouped(
         )
         for row in rows
     ]
-    page, ties_extended = _slice_grouped_rows(all_rows, request)
+    semantic_rows, semantic_ties_extended = _apply_grouped_result_limit(
+        all_rows, request
+    )
+    page, page_ties_extended = _slice_grouped_rows(semantic_rows, request)
     return GroupedAnalyticsResult(
         aggregation=aggregation,
         metric=request.metric,
@@ -394,7 +405,8 @@ def _execute_grouped(
         returned_count=len(page),
         offset=request.offset,
         limit=request.limit,
-        ties_extended=ties_extended,
+        result_limit=request.result_limit,
+        ties_extended=semantic_ties_extended or page_ties_extended,
         truncated=request.offset + len(page) < len(all_rows),
         reference_clock=reference_clock,
         applied_date_range=applied_range,
@@ -439,6 +451,28 @@ def _slice_grouped_rows(
         page.append(rows[next_index])
         next_index += 1
     return page, len(page) > request.limit
+
+
+def _apply_grouped_result_limit(
+    rows: list[GroupedResultRow],
+    request: AnalyticsRequest,
+) -> tuple[list[GroupedResultRow], bool]:
+    """Apply the question's semantic top-N limit before transport pagination."""
+
+    if request.result_limit is None or request.result_limit >= len(rows):
+        return rows, False
+
+    limited = rows[: request.result_limit]
+    result_ranked = bool(request.sort) and request.sort[0].field is SortField.RESULT
+    if not result_ranked or not limited:
+        return limited, False
+
+    boundary = limited[-1].value
+    next_index = len(limited)
+    while next_index < len(rows) and rows[next_index].value == boundary:
+        limited.append(rows[next_index])
+        next_index += 1
+    return limited, len(limited) > request.result_limit
 
 
 def _normalize_output(value: object, field: OutputField) -> object:
