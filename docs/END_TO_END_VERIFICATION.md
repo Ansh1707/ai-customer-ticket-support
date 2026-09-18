@@ -31,7 +31,7 @@ A fresh virtual environment was created outside the repository with CPython 3.11
 `python -m pip install -r requirements.txt` installed the exact direct pins. From that
 environment:
 
-- 209 deterministic and integration tests passed; 34 live tests were skipped by
+- 210 deterministic and integration tests passed; 34 live tests were skipped by
   default;
 - Ruff passed over the repository;
 - `pip check` reported no broken requirements;

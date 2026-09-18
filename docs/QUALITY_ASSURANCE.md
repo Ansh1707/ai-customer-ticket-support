@@ -87,13 +87,13 @@ python run.py
 The full live suite requires Ollama to be running with `qwen2.5:3b` installed. The
 normal suite remains fast and deterministic without Ollama.
 
-After the final code-quality regression work, the suite passes 209
+After the final documentation regression work, the suite passes 210
 deterministic/integration tests and all 34 live tests in 138.26 seconds. The added
 coverage includes independent raw-CSV facts, strict 12-hour elapsed boundaries, small
 anomaly baselines, diagnostics, public pagination, launcher-started Ollama, and the
 evaluation harness contract. The expanded 51-case Qwen benchmark passed 51/51 with
-all 42 cases outside exact prompt examples passing, 0 execution failures, 7.21-second
-mean latency, and 13.61-second P95 latency. These are explicitly development and
+all 42 cases outside exact prompt examples passing, 0 execution failures, 7,212.6 ms
+mean end-to-end latency, and 13,610.5 ms P95 latency. These are explicitly development and
 regression results, not an untouched generalization set. Expected evidence, complete results, and the initial baseline are retained
 under `evaluation/` and `docs/QWEN_EVALUATION*.md`.
 

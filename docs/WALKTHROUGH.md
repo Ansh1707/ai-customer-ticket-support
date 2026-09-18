@@ -103,11 +103,12 @@ the already captured output in the README rather than repeatedly submitting.
 
 Show the README testing section and reports rather than running long suites live:
 
-- 209 deterministic/integration tests;
+- 210 deterministic/integration tests;
 - 34/34 live-Qwen tests;
 - 51/51 labeled development/regression cases, including all five assessment samples
   and 42 cases outside the exact prompt examples;
-- 7.21-second mean and 13.61-second P95 evaluation latency;
+- 7,212.6 ms mean and 13,610.5 ms P95 evaluation latency from the report generated
+  at `2026-09-18T07:50:15+00:00`;
 - final clean-environment install, startup and shutdown rehearsal.
 
 Describe failure behavior:

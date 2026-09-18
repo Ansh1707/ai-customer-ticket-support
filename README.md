@@ -303,12 +303,35 @@ python scripts/audit_repository.py
 
 Verification results:
 
-- 209 deterministic and integration tests passed; 34 live tests are skipped by default
+- 210 deterministic and integration tests passed; 34 live tests are skipped by default
 - 34 of 34 live `qwen2.5:3b` tests passed in 138.26 seconds
 - the 51-case Qwen development/regression evaluation passed 51/51, including all 42
-  cases outside exact prompt examples; mean latency was 7.21 seconds and P95 was 13.61 seconds
+  cases outside exact prompt examples; the report generated at
+  `2026-09-18T07:50:15+00:00` records 7,212.6 ms mean end-to-end latency and
+  13,610.5 ms P95
 - exact pinned dependencies installed into a new Python 3.11 environment
 - Ruff, compilation, `pip check`, HTTP readiness, and graceful shutdown passed
+
+### Acceptance checklist and scope
+
+The project acceptance evidence establishes:
+
+- all 500 supplied rows are ingested and remain queryable;
+- the assessment questions use local `qwen2.5:3b`;
+- deterministic calculations reconcile with independent checks;
+- all documented anomaly rules work and explain their flags;
+- FastAPI and Streamlit use the same backend behavior;
+- errors and unsupported questions return structured, honest responses; and
+- one command starts the configured system.
+
+Natural-language acceptance is limited to the explicitly versioned 51-case
+development/regression set and 34 live checks. A 51/51 run verifies those cases only;
+it does not establish correctness for arbitrary wording. An `ok` result means the
+request passed schema validation and the semantic completeness checks for recognized
+material cues. Unsupported or unrepresentable recognized conditions return
+clarification without executing a partial query. The returned `interpretation` remains
+part of the evidence and should be reviewed when evaluating wording outside the
+versioned cases.
 
 ## Configuration
 
@@ -391,8 +414,16 @@ separately, set `TICKET_API_BASE_URL` to the FastAPI base URL before starting St
 - `resolved_at` is inferred because the CSV does not contain an explicit resolution
   timestamp.
 - The IQR baseline is global rather than category- or priority-specific.
-- `qwen2.5:3b` is a compact local model. Unusual phrasing can require clarification,
-  although schema validation and deterministic constraint preservation reduce errors.
+- `qwen2.5:3b` is a compact local model. The semantic completeness gate checks
+  recognized categories, negation, numeric comparisons, dates, literal summary text,
+  anomaly rules, and result limits before execution, but it cannot prove the meaning
+  of unrestricted natural language. Ordinary phrasing outside those recognized forms
+  can still be misunderstood. Inspect the returned `interpretation` and rephrase when
+  it does not match the intended question.
+- Numeric filters support equality and `>`, `>=`, `<`, and `<=`, including multiple
+  AND conditions. Forms such as numeric `between`, cross-field comparisons, or other
+  combinations that cannot be represented safely return clarification rather than a
+  successful partial answer.
 - Inference latency varies by hardware and whether Ollama has loaded the model.
 - The application supports analytics and anomaly review; it does not mutate tickets,
   predict future outcomes, or query external customer systems.
