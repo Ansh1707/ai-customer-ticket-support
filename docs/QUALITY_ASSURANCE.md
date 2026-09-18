@@ -22,7 +22,7 @@ The supported and tested interpreter is CPython 3.11.12 on Apple Silicon macOS.
 SQLite is provided by Python, while Ollama and `qwen2.5:3b` remain separate local
 prerequisites.
 
-## Clean installation
+## Historical clean installation — initial Step 16 rehearsal
 
 A new Python 3.11 virtual environment was created outside the repository with no
 access to the project `.venv`. Running the evaluator command below downloaded and
@@ -45,18 +45,13 @@ python -m pip install -r requirements.txt
 
 ## Live-model coverage
 
-The 34 live tests cover:
+The live model tests cover:
 
 - Ollama readiness and installed-model detection;
 - all five assessment questions at the interpretation and end-to-end query layers;
 - regression counts, filters, lists, means, grouped rankings, and relative dates;
 - quoted-literal isolation and clarification when a material comparison cannot be
   represented safely;
-- corrupt SQLite behavior across health, query, and anomaly endpoints, including
-  structured 503 responses and request-ID correlation;
-- exact cardinality and order for ranked evaluation rows; and
-- the custom-reference selector-to-input-to-submit UI transition with no premature
-  query execution;
 - paraphrases, ambiguity, unsupported mutation, and instruction-injection resistance;
 - FastAPI health and natural-language query behavior through the real local model.
 
@@ -87,7 +82,9 @@ python run.py
 The full live suite requires Ollama to be running with `qwen2.5:3b` installed. The
 normal suite remains fast and deterministic without Ollama.
 
-After the final documentation regression work, the suite passes 210
+## Historical post-documentation run — September 18, 2026
+
+At that revision, the suite passed 210
 deterministic/integration tests and all 34 live tests in 138.26 seconds. The added
 coverage includes independent raw-CSV facts, strict 12-hour elapsed boundaries, small
 anomaly baselines, diagnostics, public pagination, launcher-started Ollama, and the
@@ -97,7 +94,9 @@ mean end-to-end latency, and 13,610.5 ms P95 latency. These are explicitly devel
 regression results, not an untouched generalization set. Expected evidence, complete results, and the initial baseline are retained
 under `evaluation/` and `docs/QWEN_EVALUATION*.md`.
 
-The final clean-environment rehearsal installed every pinned dependency again, passed
+## Historical later clean-environment rehearsal — before code-quality fixes
+
+This rehearsal installed every pinned dependency again, passed
 the then-current 196-test offline suite, Ruff and `pip check`, and started both application
 services. A real browser submission through Streamlit reached Qwen and returned the
 same 111-ticket result as the direct API. Both normal and clean-environment launcher
@@ -110,3 +109,10 @@ environments, caches, databases, logs, model weights and high-confidence credent
 patterns. `python scripts/audit_repository.py` passes over the complete candidate file
 set and rechecks the pinned dependencies plus dataset checksum. The timed walkthrough
 is retained in `docs/WALKTHROUGH.md`.
+
+## Current remediation verification
+
+See [REASSESSMENT_REMEDIATION.md](REASSESSMENT_REMEDIATION.md) for the current
+revision's results. Historical counts above describe separate runs and must not be
+combined into a single clean-install claim. Database-corruption handling, ordered
+matcher checks and Streamlit transitions are deterministic tests, not live-model tests.

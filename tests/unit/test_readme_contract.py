@@ -38,11 +38,11 @@ def test_readme_contains_every_step_27_evaluator_requirement() -> None:
 
 def test_readme_measurements_match_the_current_evaluation_artifact() -> None:
     readme = (PROJECT_ROOT / "README.md").read_text(encoding="utf-8")
-    report = json.loads(
-        (PROJECT_ROOT / "evaluation/qwen_eval_results.json").read_text(encoding="utf-8")
-    )
-    metrics = report["metrics"]
-
-    assert f"`{report['generated_at']}`" in readme
-    assert f"{metrics['latency_ms']['mean']:,.1f} ms mean end-to-end latency" in readme
-    assert f"{metrics['latency_ms']['p95']:,.1f} ms P95" in readme
+    for name in ("qwen_eval_results.json", "qwen_eval_results.remediation.json"):
+        report = json.loads(
+            (PROJECT_ROOT / "evaluation" / name).read_text(encoding="utf-8")
+        )
+        metrics = report["metrics"]
+        assert f"`{report['generated_at']}`" in readme
+        assert f"{metrics['latency_ms']['mean']:,.1f} ms mean end-to-end latency" in readme
+        assert f"{metrics['latency_ms']['p95']:,.1f} ms P95" in readme

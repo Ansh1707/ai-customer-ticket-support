@@ -1,0 +1,283 @@
+[
+  {
+    "id": "percentage",
+    "category": "capability_boundary",
+    "prompt_example": false,
+    "question": "What percentage of tickets are resolved?",
+    "expected_interpretation": {
+      "intent": "clarification"
+    },
+    "expected_answer": {
+      "outcome": "clarification",
+      "timing": {
+        "execution_ms": 0.0
+      },
+      "data": null
+    }
+  },
+  {
+    "id": "median",
+    "category": "capability_boundary",
+    "prompt_example": false,
+    "question": "What is the median resolution time?",
+    "expected_interpretation": {
+      "intent": "clarification"
+    },
+    "expected_answer": {
+      "outcome": "clarification",
+      "timing": {
+        "execution_ms": 0.0
+      },
+      "data": null
+    }
+  },
+  {
+    "id": "cross_field_or",
+    "category": "capability_boundary",
+    "prompt_example": false,
+    "question": "How many tickets are open or Technical?",
+    "expected_interpretation": {
+      "intent": "clarification"
+    },
+    "expected_answer": {
+      "outcome": "clarification",
+      "timing": {
+        "execution_ms": 0.0
+      },
+      "data": null
+    }
+  },
+  {
+    "id": "dual_dates",
+    "category": "capability_boundary",
+    "prompt_example": false,
+    "question": "How many tickets were resolved in March but created in February 2024?",
+    "expected_interpretation": {
+      "intent": "clarification"
+    },
+    "expected_answer": {
+      "outcome": "clarification",
+      "timing": {
+        "execution_ms": 0.0
+      },
+      "data": null
+    }
+  },
+  {
+    "id": "ratio",
+    "category": "capability_boundary",
+    "prompt_example": false,
+    "question": "What is the ratio of Open to Resolved tickets?",
+    "expected_interpretation": {
+      "intent": "clarification"
+    },
+    "expected_answer": {
+      "outcome": "clarification",
+      "timing": {
+        "execution_ms": 0.0
+      },
+      "data": null
+    }
+  },
+  {
+    "id": "numeric_or",
+    "category": "capability_boundary",
+    "prompt_example": false,
+    "question": "How many tickets have customer rating above 4 or response time below 2?",
+    "expected_interpretation": {
+      "intent": "clarification"
+    },
+    "expected_answer": {
+      "outcome": "clarification",
+      "timing": {
+        "execution_ms": 0.0
+      },
+      "data": null
+    }
+  },
+  {
+    "id": "oversized_limit",
+    "category": "capability_boundary",
+    "prompt_example": false,
+    "question": "Show 101 tickets",
+    "expected_interpretation": {
+      "intent": "clarification"
+    },
+    "expected_answer": {
+      "outcome": "clarification",
+      "timing": {
+        "execution_ms": 0.0
+      },
+      "data": null
+    }
+  },
+  {
+    "id": "missing_rating",
+    "category": "capability_boundary",
+    "prompt_example": false,
+    "question": "How many tickets have no customer rating?",
+    "expected_interpretation": {
+      "intent": "analytics"
+    },
+    "expected_answer": {
+      "outcome": "ok",
+      "data": {
+        "value": 173
+      }
+    }
+  },
+  {
+    "id": "present_rating",
+    "category": "capability_boundary",
+    "prompt_example": false,
+    "question": "How many tickets have a recorded customer rating?",
+    "expected_interpretation": {
+      "intent": "analytics"
+    },
+    "expected_answer": {
+      "outcome": "ok",
+      "data": {
+        "value": 327
+      }
+    }
+  },
+  {
+    "id": "missing_resolution",
+    "category": "capability_boundary",
+    "prompt_example": false,
+    "question": "How many tickets have resolution time is null?",
+    "expected_interpretation": {
+      "intent": "analytics"
+    },
+    "expected_answer": {
+      "outcome": "ok",
+      "data": {
+        "value": 173
+      }
+    }
+  },
+  {
+    "id": "not_open",
+    "category": "capability_boundary",
+    "prompt_example": false,
+    "question": "How many tickets are not open?",
+    "expected_interpretation": {
+      "intent": "analytics"
+    },
+    "expected_answer": {
+      "outcome": "ok",
+      "data": {
+        "value": 389
+      }
+    }
+  },
+  {
+    "id": "rating_gte",
+    "category": "capability_boundary",
+    "prompt_example": false,
+    "question": "How many tickets have customer rating at least 4?",
+    "expected_interpretation": {
+      "intent": "analytics"
+    },
+    "expected_answer": {
+      "outcome": "ok",
+      "data": {
+        "value": 211
+      }
+    }
+  },
+  {
+    "id": "priority_or",
+    "category": "capability_boundary",
+    "prompt_example": false,
+    "question": "How many High or Critical priority tickets are there?",
+    "expected_interpretation": {
+      "intent": "analytics"
+    },
+    "expected_answer": {
+      "outcome": "ok",
+      "data": {
+        "value": 189
+      }
+    }
+  },
+  {
+    "id": "quoted_statistics",
+    "category": "capability_boundary",
+    "prompt_example": false,
+    "question": "How many issue summaries contain \"median or percentage\"?",
+    "expected_interpretation": {
+      "intent": "analytics"
+    },
+    "expected_answer": {
+      "outcome": "ok",
+      "data": {
+        "value": 0
+      }
+    }
+  },
+  {
+    "id": "five_agents",
+    "category": "capability_boundary",
+    "prompt_example": false,
+    "question": "Which 5 agents have the fastest average response time?",
+    "expected_interpretation": {
+      "intent": "analytics"
+    },
+    "expected_answer": {
+      "outcome": "ok",
+      "data": {
+        "returned_count": 5,
+        "rows": [
+          {
+            "group_value": "AGT-09"
+          },
+          {
+            "group_value": "AGT-10"
+          },
+          {
+            "group_value": "AGT-08"
+          },
+          {
+            "group_value": "AGT-02"
+          },
+          {
+            "group_value": "AGT-06"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "three_oldest",
+    "category": "capability_boundary",
+    "prompt_example": false,
+    "question": "Show the 3 oldest unresolved tickets.",
+    "expected_interpretation": {
+      "intent": "analytics"
+    },
+    "expected_answer": {
+      "outcome": "ok",
+      "data": {
+        "returned_count": 3,
+        "rows": [
+          {
+            "values": {
+              "ticket_id": "TKT-054"
+            }
+          },
+          {
+            "values": {
+              "ticket_id": "TKT-233"
+            }
+          },
+          {
+            "values": {
+              "ticket_id": "TKT-289"
+            }
+          }
+        ]
+      }
+    }
+  }
+]

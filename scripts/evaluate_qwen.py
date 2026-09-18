@@ -196,8 +196,8 @@ def _matches_interpretation(actual: Any, expected: Any) -> bool:
     return _matches_subset(actual, expected)
 
 
-def _rate(items: list[dict[str, Any]], field: str) -> float:
-    return sum(item.get(field) is True for item in items) / len(items) if items else 0.0
+def _rate(items: list[dict[str, Any]], field: str) -> float | None:
+    return sum(item.get(field) is True for item in items) / len(items) if items else None
 
 
 def _percentile(values: list[float], probability: float) -> float:
@@ -212,8 +212,8 @@ def _percentile(values: list[float], probability: float) -> float:
 def _markdown(report: dict[str, Any]) -> str:
     metrics = report["metrics"]
 
-    def percent(value: float) -> str:
-        return f"{value * 100:.1f}%"
+    def percent(value: float | None) -> str:
+        return "N/A (no cases)" if value is None else f"{value * 100:.1f}%"
 
     lines = [
         "# Qwen2.5 3B Evaluation Report",
@@ -292,14 +292,16 @@ def _markdown(report: dict[str, Any]) -> str:
     target_met = (
         metrics["assessment_sample_pass_rate"] == 1.0
         and metrics["invalid_safe_handling_rate"] == 1.0
-        and metrics["supported_answer_accuracy"] >= 0.9
+        and (metrics["supported_answer_accuracy"] or 0) >= 0.9
     )
     lines.extend(
         [
             "## Target assessment",
             "",
             (
-                "The Step 25 target was met."
+                "The Step 25 target is not assessed by this case set."
+                if metrics["assessment_sample_pass_rate"] is None
+                else "The Step 25 target was met."
                 if target_met
                 else "The Step 25 target was not fully met; failures are reported above."
             ),
@@ -360,7 +362,7 @@ def main() -> int:
     arguments.markdown_output.write_text(_markdown(report), encoding="utf-8")
     print(f"JSON report: {arguments.json_output}")
     print(f"Markdown report: {arguments.markdown_output}")
-    return 0
+    return 1 if report["failed_case_ids"] else 0
 
 
 if __name__ == "__main__":

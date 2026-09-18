@@ -154,3 +154,8 @@ def test_report_metrics_and_markdown_are_derived_from_case_results() -> None:
     assert "The Step 25 target was met." in markdown
     assert "not an untouched final test set" in markdown
     assert "Held-out" not in markdown
+
+
+def test_empty_metric_denominator_is_not_a_failure_rate():
+    from scripts.evaluate_qwen import _rate
+    assert _rate([], 'case_passed') is None

@@ -1,0 +1,26 @@
+{
+  "protocol": "Created after implementation freeze; no tuning on outcomes. Author knows development cases; this is prospective evidence, not an independently authored blind set.",
+  "sha256": {
+    "src/ticket_support_ai/__init__.py": "95ad8fd0d068dbede7a625ec85720c861041269bbb1e490fdebc63a60c74f510",
+    "src/ticket_support_ai/analytics.py": "95a3bc39046e5b9e768c6b51eae1a54dd85fcf1f0991b4b64feff794fa1bb14c",
+    "src/ticket_support_ai/anomalies.py": "9d6c0425059628f68134de6dcc0ca39d2c734e221da2b4b0a06f8268ce5624d9",
+    "src/ticket_support_ai/api.py": "40b71af4b37bdc7579b3951fac2318276d09b02d555b26110dff4ffc1f5020ed",
+    "src/ticket_support_ai/capabilities.py": "22e08fcb9983714b53598f0b8ec464de9a91b343fea8a63785b82143854a07b4",
+    "src/ticket_support_ai/config.py": "357466e7ae3b56ee5c755642ae7fe24d5fa71f98d2fe703305e5ad3690be0098",
+    "src/ticket_support_ai/database.py": "c2b2c8c9532f31c893431da10708b95f7bff3f38d3f49e71e11dd89f1a7c38ca",
+    "src/ticket_support_ai/dates.py": "3520fc07d4c04f87a0003d8fefce5d769536cd26b2532c1ce9bac605a8f6c093",
+    "src/ticket_support_ai/diagnostics.py": "29d314036924843f01ecc126ae4b9e6511ef43c1b88898a65faf1907f684b1c6",
+    "src/ticket_support_ai/ingestion.py": "7a70bbf2a3c572a5393652db183b27fcff792e897084bdff39ba50ad8f594af8",
+    "src/ticket_support_ai/launcher.py": "61f2abcc666af2324c3f3fd0b26a7048ac89b3b5f02d0099350c91d752132d2b",
+    "src/ticket_support_ai/llm.py": "5b296482c78ba4ebcb34b82c8852e35c55f36f6af72cc5909e1ae71ec69cc763",
+    "src/ticket_support_ai/llm_errors.py": "bb5df067c261a0ba1c6f6e184f8cacb5e72cd51c0bf7ccee201e8e0a0769ec63",
+    "src/ticket_support_ai/llm_language.py": "b943ef9441876f19ffbad868cf1cea138574c2a547d477dd9ac3e1e0673165be",
+    "src/ticket_support_ai/llm_plans.py": "6c0c02c53924170774713d26e2ad8924980720f274e3877ced1d6a73c395de7b",
+    "src/ticket_support_ai/llm_prompts.py": "413607389a231860073a38b80424391f91be77d7f903ef122a8f232b7542b37d",
+    "src/ticket_support_ai/llm_semantics.py": "4633b97cd128faa6223483786a7ce546076c6c3bcd2621e6c254cc83ca9e147d",
+    "src/ticket_support_ai/query.py": "dff8f19a3718425d7e029ed64251c9d1a937fb07f6951d8acb36e9fc6513c7c3",
+    "src/ticket_support_ai/schemas.py": "7a71acc609f6545ddb4ed0423e4c44a82b45f8626de6c70cb72764fb16760ef3",
+    "src/ticket_support_ai/ui.py": "c4b00f99fae0bcde9bd09743aae093a6453c1a37645898315f32a0d4184eb363",
+    "evaluation/prospective_cases.json": "9b196fcfb7926eeea914d90e15ac46482d0f1e92ed7bcaa663f46a490387b4e9"
+  }
+}

@@ -184,3 +184,5 @@ incidents before adding statistical or learned detectors.
 - [ ] Explain one safe failure without intentionally breaking the live demo.
 - [ ] Leave seven minutes for tradeoffs and scaling rather than adding more queries.
 - [ ] Keep the README and captured reports ready as a fallback.
+
+For the latest capability fixes and verification, use [REASSESSMENT_REMEDIATION.md](REASSESSMENT_REMEDIATION.md); earlier measurements above describe their original runs.

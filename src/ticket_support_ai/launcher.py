@@ -20,7 +20,7 @@ from urllib.error import URLError
 from urllib.request import urlopen
 
 from ticket_support_ai.database import ingest_csv_snapshot
-from ticket_support_ai.llm import OllamaInterpreter, OllamaModelStatus
+from ticket_support_ai.llm import LLMError, OllamaInterpreter, OllamaModelStatus
 
 DEFAULT_API_HOST = "127.0.0.1"
 DEFAULT_API_PORT = 8000
@@ -45,6 +45,7 @@ class LauncherSettings:
     ui_port: int = DEFAULT_UI_PORT
     startup_timeout_seconds: float = 45.0
     check_model: bool = True
+    warm_model: bool = True
 
     def __post_init__(self) -> None:
         if not self.project_root.is_dir():
@@ -103,6 +104,12 @@ class ApplicationLauncher:
             if not status.service_available:
                 status = self._start_local_ollama(interpreter)
             if status.service_available and status.model_available:
+                if self.settings.warm_model:
+                    print("Warming Qwen before accepting questions...", flush=True)
+                    try:
+                        asyncio.run(interpreter.warmup())
+                    except LLMError as exc:
+                        print(f"Warning: model warm-up failed: {exc}", flush=True)
                 print(
                     f"Model ready: {status.model} through Ollama "
                     f"{status.version or 'unknown version'}",
@@ -309,6 +316,10 @@ def build_parser(project_root: Path) -> argparse.ArgumentParser:
     parser.add_argument("--ui-port", type=int, default=DEFAULT_UI_PORT)
     parser.add_argument("--startup-timeout", type=float, default=45.0)
     parser.add_argument(
+        "--skip-model-warmup", action="store_true",
+        help="Skip the bounded startup inference that preloads Qwen.",
+    )
+    parser.add_argument(
         "--skip-model-check",
         action="store_true",
         help="Start without the optional Ollama readiness preflight.",
@@ -332,6 +343,7 @@ def main(argv: Sequence[str] | None = None, *, project_root: Path | None = None)
             ui_port=arguments.ui_port,
             startup_timeout_seconds=arguments.startup_timeout,
             check_model=not arguments.skip_model_check,
+            warm_model=not arguments.skip_model_warmup,
         )
     except ValueError as exc:
         print(f"Invalid launcher configuration: {exc}", file=sys.stderr)

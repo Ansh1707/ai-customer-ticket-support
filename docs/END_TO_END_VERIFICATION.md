@@ -25,13 +25,14 @@ API agree while using the actual local model and database.
 Ctrl+C stopped both launcher-owned processes. Ports 8896 and 8897 were probed after
 shutdown and were released.
 
-## Clean-environment rehearsal
+## Historical clean-environment rehearsal (before latest remediation)
 
 A fresh virtual environment was created outside the repository with CPython 3.11.12.
 `python -m pip install -r requirements.txt` installed the exact direct pins. From that
 environment:
 
-- 210 deterministic and integration tests passed; 34 live tests were skipped by
+- The recorded clean-install rehearsal passed its then-current suite; subsequent
+  code-quality/documentation verification reached 210 tests with 34 live tests skipped by
   default;
 - Ruff passed over the repository;
 - `pip check` reported no broken requirements;
@@ -61,3 +62,5 @@ python run.py
 
 Open `http://127.0.0.1:8501`, submit the first assessment sample, verify the answer is
 111, and press Ctrl+C in the launcher terminal when finished.
+
+Current changes and verification are recorded separately in [REASSESSMENT_REMEDIATION.md](REASSESSMENT_REMEDIATION.md).

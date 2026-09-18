@@ -104,6 +104,9 @@ def test_prepare_starts_installed_ollama_when_service_is_unreachable(
         def __init__(self) -> None:
             self.calls = 0
 
+        async def warmup(self) -> None:
+            pass
+
         async def readiness(self) -> OllamaModelStatus:
             self.calls += 1
             ready = self.calls >= 2
@@ -238,3 +241,21 @@ def test_main_rejects_conflicting_ports_before_startup(tmp_path: Path) -> None:
     )
 
     assert result == 2
+
+
+@pytest.mark.parametrize("fail_warmup", [False, True])
+def test_warmup_is_attempted_and_failure_does_not_block_startup(tmp_path, monkeypatch, capsys, fail_warmup):
+    calls = []
+    class Interpreter:
+        async def readiness(self):
+            return OllamaModelStatus(model='qwen2.5:3b', service_available=True, model_available=True)
+        async def warmup(self):
+            calls.append('warmup')
+            if fail_warmup:
+                raise launcher.LLMError('test warmup failure')
+    monkeypatch.setattr(launcher, 'OllamaInterpreter', Interpreter)
+    monkeypatch.setattr(launcher, '_ensure_port_available', lambda *args: None)
+    ApplicationLauncher(settings(tmp_path, check_model=True)).prepare()
+    assert calls == ['warmup']
+    output = capsys.readouterr().out
+    assert ('warm-up failed' in output) == fail_warmup

@@ -153,3 +153,5 @@ The audited commit was published to the public repository
 `https://github.com/Ansh1707/ai-customer-ticket-support`. An unauthenticated GitHub API
 request confirmed public visibility and default branch `main`; an unauthenticated raw
 README download matched the local checksum, and local `HEAD` matched `origin/main`.
+
+For the latest capability fixes and verification, use [REASSESSMENT_REMEDIATION.md](REASSESSMENT_REMEDIATION.md); earlier measurements above describe their original runs.

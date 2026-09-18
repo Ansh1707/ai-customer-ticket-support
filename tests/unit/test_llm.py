@@ -23,8 +23,10 @@ from ticket_support_ai.llm import (
     OllamaUnavailableError,
     QuestionValidationError,
     StructuredOutputError,
+)
+from ticket_support_ai.llm_language import _extract_explicit_date_range
+from ticket_support_ai.llm_semantics import (
     _compile_analytics_plan,
-    _extract_explicit_date_range,
     _preserve_anomaly_request,
     _preserve_explicit_constraints,
     _preserve_safe_route,
@@ -529,3 +531,14 @@ def test_semantic_completeness_gate_blocks_partial_or_unsupported_conditions() -
     )
     assert result.intent is QueryIntent.CLARIFICATION
     assert "unsupported numeric comparison" in result.question
+
+
+def test_warmup_performs_bounded_real_interpretation_with_keep_alive():
+    requests = []
+    def handler(request):
+        payload = json.loads(request.content)
+        requests.append(payload)
+        return httpx.Response(200, json=route_response() if len(requests) == 1 else count_response())
+    run(OllamaInterpreter(client=client_for(handler)).warmup())
+    assert len(requests) == 2
+    assert all(item['keep_alive'] == '10m' for item in requests)

@@ -99,3 +99,17 @@ The normal test suite skips live calls so it remains deterministic and does not 
 Ollama. Mocked tests cover request payloads, two-stage schemas, correction context,
 question validation, transport failures, missing models, malformed responses and
 readiness states.
+
+## Capability boundary and module ownership
+
+The model-facing `AnalyticsPlan` now carries typed `null_conditions` alongside numeric
+conditions. Both compile to the existing engine's typed filters. The documented
+unsupported statistical, Boolean and dual-date families are checked independently
+of model route/output before detail generation and again at reconciliation. This
+preserves a deliberately bounded contract without substituting mean for median,
+count for percentage, or AND for cross-field OR.
+
+`llm.py` owns HTTP, retries and the total timeout. `llm_prompts.py` owns prompts;
+`llm_plans.py` owns compact contracts; `llm_language.py` extracts literal cues;
+`llm_semantics.py` compiles and checks plans; `capabilities.py` declares limitations.
+No module performs arithmetic through the LLM. See the remediation report for tests.

@@ -1,0 +1,816 @@
+{
+  "cases": [
+    {
+      "category": "capability_boundary",
+      "expected_answer": {
+        "data": null,
+        "outcome": "clarification",
+        "timing": {
+          "execution_ms": 0.0
+        }
+      },
+      "expected_interpretation": {
+        "intent": "clarification"
+      },
+      "id": "percentage",
+      "prompt_example": false,
+      "question": "What percentage of tickets are resolved?"
+    },
+    {
+      "category": "capability_boundary",
+      "expected_answer": {
+        "data": null,
+        "outcome": "clarification",
+        "timing": {
+          "execution_ms": 0.0
+        }
+      },
+      "expected_interpretation": {
+        "intent": "clarification"
+      },
+      "id": "median",
+      "prompt_example": false,
+      "question": "What is the median resolution time?"
+    },
+    {
+      "category": "capability_boundary",
+      "expected_answer": {
+        "data": null,
+        "outcome": "clarification",
+        "timing": {
+          "execution_ms": 0.0
+        }
+      },
+      "expected_interpretation": {
+        "intent": "clarification"
+      },
+      "id": "cross_field_or",
+      "prompt_example": false,
+      "question": "How many tickets are open or Technical?"
+    },
+    {
+      "category": "capability_boundary",
+      "expected_answer": {
+        "data": null,
+        "outcome": "clarification",
+        "timing": {
+          "execution_ms": 0.0
+        }
+      },
+      "expected_interpretation": {
+        "intent": "clarification"
+      },
+      "id": "dual_dates",
+      "prompt_example": false,
+      "question": "How many tickets were resolved in March but created in February 2024?"
+    },
+    {
+      "category": "capability_boundary",
+      "expected_answer": {
+        "data": null,
+        "outcome": "clarification",
+        "timing": {
+          "execution_ms": 0.0
+        }
+      },
+      "expected_interpretation": {
+        "intent": "clarification"
+      },
+      "id": "ratio",
+      "prompt_example": false,
+      "question": "What is the ratio of Open to Resolved tickets?"
+    },
+    {
+      "category": "capability_boundary",
+      "expected_answer": {
+        "data": null,
+        "outcome": "clarification",
+        "timing": {
+          "execution_ms": 0.0
+        }
+      },
+      "expected_interpretation": {
+        "intent": "clarification"
+      },
+      "id": "numeric_or",
+      "prompt_example": false,
+      "question": "How many tickets have customer rating above 4 or response time below 2?"
+    },
+    {
+      "category": "capability_boundary",
+      "expected_answer": {
+        "data": null,
+        "outcome": "clarification",
+        "timing": {
+          "execution_ms": 0.0
+        }
+      },
+      "expected_interpretation": {
+        "intent": "clarification"
+      },
+      "id": "oversized_limit",
+      "prompt_example": false,
+      "question": "Show 101 tickets"
+    },
+    {
+      "category": "capability_boundary",
+      "expected_answer": {
+        "data": {
+          "value": 173
+        },
+        "outcome": "ok"
+      },
+      "expected_interpretation": {
+        "intent": "analytics"
+      },
+      "id": "missing_rating",
+      "prompt_example": false,
+      "question": "How many tickets have no customer rating?"
+    },
+    {
+      "category": "capability_boundary",
+      "expected_answer": {
+        "data": {
+          "value": 327
+        },
+        "outcome": "ok"
+      },
+      "expected_interpretation": {
+        "intent": "analytics"
+      },
+      "id": "present_rating",
+      "prompt_example": false,
+      "question": "How many tickets have a recorded customer rating?"
+    },
+    {
+      "category": "capability_boundary",
+      "expected_answer": {
+        "data": {
+          "value": 173
+        },
+        "outcome": "ok"
+      },
+      "expected_interpretation": {
+        "intent": "analytics"
+      },
+      "id": "missing_resolution",
+      "prompt_example": false,
+      "question": "How many tickets have resolution time is null?"
+    },
+    {
+      "category": "capability_boundary",
+      "expected_answer": {
+        "data": {
+          "value": 389
+        },
+        "outcome": "ok"
+      },
+      "expected_interpretation": {
+        "intent": "analytics"
+      },
+      "id": "not_open",
+      "prompt_example": false,
+      "question": "How many tickets are not open?"
+    },
+    {
+      "category": "capability_boundary",
+      "expected_answer": {
+        "data": {
+          "value": 211
+        },
+        "outcome": "ok"
+      },
+      "expected_interpretation": {
+        "intent": "analytics"
+      },
+      "id": "rating_gte",
+      "prompt_example": false,
+      "question": "How many tickets have customer rating at least 4?"
+    },
+    {
+      "category": "capability_boundary",
+      "expected_answer": {
+        "data": {
+          "value": 189
+        },
+        "outcome": "ok"
+      },
+      "expected_interpretation": {
+        "intent": "analytics"
+      },
+      "id": "priority_or",
+      "prompt_example": false,
+      "question": "How many High or Critical priority tickets are there?"
+    },
+    {
+      "category": "capability_boundary",
+      "expected_answer": {
+        "data": {
+          "value": 0
+        },
+        "outcome": "ok"
+      },
+      "expected_interpretation": {
+        "intent": "analytics"
+      },
+      "id": "quoted_statistics",
+      "prompt_example": false,
+      "question": "How many issue summaries contain \"median or percentage\"?"
+    },
+    {
+      "category": "capability_boundary",
+      "expected_answer": {
+        "data": {
+          "returned_count": 5,
+          "rows": [
+            {
+              "group_value": "AGT-09"
+            },
+            {
+              "group_value": "AGT-10"
+            },
+            {
+              "group_value": "AGT-08"
+            },
+            {
+              "group_value": "AGT-02"
+            },
+            {
+              "group_value": "AGT-06"
+            }
+          ]
+        },
+        "outcome": "ok"
+      },
+      "expected_interpretation": {
+        "intent": "analytics"
+      },
+      "id": "five_agents",
+      "prompt_example": false,
+      "question": "Which 5 agents have the fastest average response time?"
+    },
+    {
+      "category": "capability_boundary",
+      "expected_answer": {
+        "data": {
+          "returned_count": 3,
+          "rows": [
+            {
+              "values": {
+                "ticket_id": "TKT-054"
+              }
+            },
+            {
+              "values": {
+                "ticket_id": "TKT-233"
+              }
+            },
+            {
+              "values": {
+                "ticket_id": "TKT-289"
+              }
+            }
+          ]
+        },
+        "outcome": "ok"
+      },
+      "expected_interpretation": {
+        "intent": "analytics"
+      },
+      "id": "three_oldest",
+      "prompt_example": false,
+      "question": "Show the 3 oldest unresolved tickets."
+    }
+  ],
+  "category_counts": {
+    "capability_boundary": 16
+  },
+  "dataset_sha256": "812984803c7e806803269aaf00da76b1adf21c6165ce58f86fd1bef20bb5ebff",
+  "failed_case_ids": [],
+  "generated_at": "2026-09-18T11:55:46+00:00",
+  "metrics": {
+    "assessment_sample_pass_rate": null,
+    "case_count": 16,
+    "clarification_accuracy": null,
+    "execution_failure_rate": 0.0,
+    "interpretation_accuracy": 1.0,
+    "interpretation_latency_ms": {
+      "maximum": 14656.081624998478,
+      "mean": 4405.202458376152,
+      "median": 3373.0182705039624,
+      "p95": 11774.62662501057
+    },
+    "invalid_safe_handling_rate": null,
+    "latency_ms": {
+      "maximum": 14872.403583984124,
+      "mean": 4434.632424434312,
+      "median": 3406.7742915067356,
+      "p95": 11831.860926991794
+    },
+    "non_prompt_example_count": 16,
+    "non_prompt_example_pass_rate": 1.0,
+    "non_supported_safe_outcome_rate": 1.0,
+    "overall_pass_rate": 1.0,
+    "prompt_example_count": 0,
+    "supported_answer_accuracy": 1.0,
+    "supported_case_count": 9,
+    "supported_interpretation_accuracy": 1.0
+  },
+  "model": "qwen2.5:3b",
+  "reference_timestamp": "2024-04-05T00:00:00",
+  "results": [
+    {
+      "actual_answer": "Median, percentile, percentage, and ratio calculations are not supported. Ask for a count or an average instead.",
+      "actual_interpretation": {
+        "intent": "clarification",
+        "question": "Median, percentile, percentage, and ratio calculations are not supported. Ask for a count or an average instead.",
+        "reason": "The requested capability cannot be represented safely; no data query was executed."
+      },
+      "actual_matching_count": null,
+      "actual_outcome": "clarification",
+      "answer_correct": null,
+      "case_passed": true,
+      "category": "capability_boundary",
+      "exception": null,
+      "id": "percentage",
+      "interpretation_correct": true,
+      "interpretation_latency_ms": 10814.1416250146,
+      "prompt_example": false,
+      "safe_outcome_correct": true,
+      "supported": false,
+      "total_latency_ms": 10818.346707994351
+    },
+    {
+      "actual_answer": "Median, percentile, percentage, and ratio calculations are not supported. Ask for a count or an average instead.",
+      "actual_interpretation": {
+        "intent": "clarification",
+        "question": "Median, percentile, percentage, and ratio calculations are not supported. Ask for a count or an average instead.",
+        "reason": "The requested capability cannot be represented safely; no data query was executed."
+      },
+      "actual_matching_count": null,
+      "actual_outcome": "clarification",
+      "answer_correct": null,
+      "case_passed": true,
+      "category": "capability_boundary",
+      "exception": null,
+      "id": "median",
+      "interpretation_correct": true,
+      "interpretation_latency_ms": 1072.274042002391,
+      "prompt_example": false,
+      "safe_outcome_correct": true,
+      "supported": false,
+      "total_latency_ms": 1090.9216669970192
+    },
+    {
+      "actual_answer": "OR is supported only between values of the same categorical field. Split cross-field or nested Boolean questions into separate queries.",
+      "actual_interpretation": {
+        "intent": "clarification",
+        "question": "OR is supported only between values of the same categorical field. Split cross-field or nested Boolean questions into separate queries.",
+        "reason": "The requested capability cannot be represented safely; no data query was executed."
+      },
+      "actual_matching_count": null,
+      "actual_outcome": "clarification",
+      "answer_correct": null,
+      "case_passed": true,
+      "category": "capability_boundary",
+      "exception": null,
+      "id": "cross_field_or",
+      "interpretation_correct": true,
+      "interpretation_latency_ms": 1115.1186249917373,
+      "prompt_example": false,
+      "safe_outcome_correct": true,
+      "supported": false,
+      "total_latency_ms": 1124.6950829809066
+    },
+    {
+      "actual_answer": "Only one event date range is supported per question. Ask separately about creation and resolution dates.",
+      "actual_interpretation": {
+        "intent": "clarification",
+        "question": "Only one event date range is supported per question. Ask separately about creation and resolution dates.",
+        "reason": "The requested capability cannot be represented safely; no data query was executed."
+      },
+      "actual_matching_count": null,
+      "actual_outcome": "clarification",
+      "answer_correct": null,
+      "case_passed": true,
+      "category": "capability_boundary",
+      "exception": null,
+      "id": "dual_dates",
+      "interpretation_correct": true,
+      "interpretation_latency_ms": 1141.9654170167632,
+      "prompt_example": false,
+      "safe_outcome_correct": true,
+      "supported": false,
+      "total_latency_ms": 1148.0037500150502
+    },
+    {
+      "actual_answer": "Median, percentile, percentage, and ratio calculations are not supported. Ask for a count or an average instead.",
+      "actual_interpretation": {
+        "intent": "clarification",
+        "question": "Median, percentile, percentage, and ratio calculations are not supported. Ask for a count or an average instead.",
+        "reason": "The requested capability cannot be represented safely; no data query was executed."
+      },
+      "actual_matching_count": null,
+      "actual_outcome": "clarification",
+      "answer_correct": null,
+      "case_passed": true,
+      "category": "capability_boundary",
+      "exception": null,
+      "id": "ratio",
+      "interpretation_correct": true,
+      "interpretation_latency_ms": 1452.4795000033919,
+      "prompt_example": false,
+      "safe_outcome_correct": true,
+      "supported": false,
+      "total_latency_ms": 1460.3872500010766
+    },
+    {
+      "actual_answer": "OR is supported only between values of the same categorical field. Split cross-field or nested Boolean questions into separate queries.",
+      "actual_interpretation": {
+        "intent": "clarification",
+        "question": "OR is supported only between values of the same categorical field. Split cross-field or nested Boolean questions into separate queries.",
+        "reason": "The requested capability cannot be represented safely; no data query was executed."
+      },
+      "actual_matching_count": null,
+      "actual_outcome": "clarification",
+      "answer_correct": null,
+      "case_passed": true,
+      "category": "capability_boundary",
+      "exception": null,
+      "id": "numeric_or",
+      "interpretation_correct": true,
+      "interpretation_latency_ms": 1421.859541995218,
+      "prompt_example": false,
+      "safe_outcome_correct": true,
+      "supported": false,
+      "total_latency_ms": 1432.8054169891402
+    },
+    {
+      "actual_answer": "Request between 1 and 100 results using a numeric result count.",
+      "actual_interpretation": {
+        "intent": "clarification",
+        "question": "Request between 1 and 100 results using a numeric result count.",
+        "reason": "The requested capability cannot be represented safely; no data query was executed."
+      },
+      "actual_matching_count": null,
+      "actual_outcome": "clarification",
+      "answer_correct": null,
+      "case_passed": true,
+      "category": "capability_boundary",
+      "exception": null,
+      "id": "oversized_limit",
+      "interpretation_correct": true,
+      "interpretation_latency_ms": 1841.7363750049844,
+      "prompt_example": false,
+      "safe_outcome_correct": true,
+      "supported": false,
+      "total_latency_ms": 1850.1239159959368
+    },
+    {
+      "actual_answer": "173 tickets match the interpreted request.",
+      "actual_interpretation": {
+        "aggregation": null,
+        "filters": [
+          {
+            "field": "customer_rating",
+            "operator": "is_null"
+          }
+        ],
+        "group_by": null,
+        "intent": "analytics",
+        "limit": 50,
+        "metric": null,
+        "offset": 0,
+        "operation": "count",
+        "result_limit": null,
+        "selected_fields": [],
+        "sort": [],
+        "time_filter": null
+      },
+      "actual_matching_count": 173,
+      "actual_outcome": "ok",
+      "answer_correct": true,
+      "case_passed": true,
+      "category": "capability_boundary",
+      "exception": null,
+      "id": "missing_rating",
+      "interpretation_correct": true,
+      "interpretation_latency_ms": 14656.081624998478,
+      "prompt_example": false,
+      "safe_outcome_correct": null,
+      "supported": true,
+      "total_latency_ms": 14872.403583984124
+    },
+    {
+      "actual_answer": "327 tickets match the interpreted request.",
+      "actual_interpretation": {
+        "aggregation": null,
+        "filters": [
+          {
+            "field": "customer_rating",
+            "operator": "is_not_null"
+          }
+        ],
+        "group_by": null,
+        "intent": "analytics",
+        "limit": 50,
+        "metric": null,
+        "offset": 0,
+        "operation": "count",
+        "result_limit": null,
+        "selected_fields": [],
+        "sort": [],
+        "time_filter": null
+      },
+      "actual_matching_count": 327,
+      "actual_outcome": "ok",
+      "answer_correct": true,
+      "case_passed": true,
+      "category": "capability_boundary",
+      "exception": null,
+      "id": "present_rating",
+      "interpretation_correct": true,
+      "interpretation_latency_ms": 4715.561374992831,
+      "prompt_example": false,
+      "safe_outcome_correct": null,
+      "supported": true,
+      "total_latency_ms": 4751.786874985555
+    },
+    {
+      "actual_answer": "173 tickets match the interpreted request.",
+      "actual_interpretation": {
+        "aggregation": null,
+        "filters": [
+          {
+            "field": "resolution_time_hrs",
+            "operator": "is_null"
+          }
+        ],
+        "group_by": null,
+        "intent": "analytics",
+        "limit": 50,
+        "metric": null,
+        "offset": 0,
+        "operation": "count",
+        "result_limit": null,
+        "selected_fields": [],
+        "sort": [],
+        "time_filter": null
+      },
+      "actual_matching_count": 173,
+      "actual_outcome": "ok",
+      "answer_correct": true,
+      "case_passed": true,
+      "category": "capability_boundary",
+      "exception": null,
+      "id": "missing_resolution",
+      "interpretation_correct": true,
+      "interpretation_latency_ms": 7801.444333977997,
+      "prompt_example": false,
+      "safe_outcome_correct": null,
+      "supported": true,
+      "total_latency_ms": 7820.870665978873
+    },
+    {
+      "actual_answer": "389 tickets match the interpreted request.",
+      "actual_interpretation": {
+        "aggregation": null,
+        "filters": [
+          {
+            "field": "status",
+            "operator": "ne",
+            "value": "Open"
+          }
+        ],
+        "group_by": null,
+        "intent": "analytics",
+        "limit": 50,
+        "metric": null,
+        "offset": 0,
+        "operation": "count",
+        "result_limit": null,
+        "selected_fields": [],
+        "sort": [],
+        "time_filter": null
+      },
+      "actual_matching_count": 389,
+      "actual_outcome": "ok",
+      "answer_correct": true,
+      "case_passed": true,
+      "category": "capability_boundary",
+      "exception": null,
+      "id": "not_open",
+      "interpretation_correct": true,
+      "interpretation_latency_ms": 3151.6034160158597,
+      "prompt_example": false,
+      "safe_outcome_correct": null,
+      "supported": true,
+      "total_latency_ms": 3209.246375015937
+    },
+    {
+      "actual_answer": "211 tickets match the interpreted request.",
+      "actual_interpretation": {
+        "aggregation": null,
+        "filters": [
+          {
+            "field": "customer_rating",
+            "operator": "gte",
+            "value": 4.0
+          }
+        ],
+        "group_by": null,
+        "intent": "analytics",
+        "limit": 50,
+        "metric": null,
+        "offset": 0,
+        "operation": "count",
+        "result_limit": null,
+        "selected_fields": [],
+        "sort": [],
+        "time_filter": null
+      },
+      "actual_matching_count": 211,
+      "actual_outcome": "ok",
+      "answer_correct": true,
+      "case_passed": true,
+      "category": "capability_boundary",
+      "exception": null,
+      "id": "rating_gte",
+      "interpretation_correct": true,
+      "interpretation_latency_ms": 3594.433124992065,
+      "prompt_example": false,
+      "safe_outcome_correct": null,
+      "supported": true,
+      "total_latency_ms": 3604.3022079975344
+    },
+    {
+      "actual_answer": "189 tickets match the interpreted request.",
+      "actual_interpretation": {
+        "aggregation": null,
+        "filters": [
+          {
+            "field": "priority",
+            "operator": "in",
+            "values": [
+              "High",
+              "Critical"
+            ]
+          }
+        ],
+        "group_by": null,
+        "intent": "analytics",
+        "limit": 50,
+        "metric": null,
+        "offset": 0,
+        "operation": "count",
+        "result_limit": null,
+        "selected_fields": [],
+        "sort": [],
+        "time_filter": null
+      },
+      "actual_matching_count": 189,
+      "actual_outcome": "ok",
+      "answer_correct": true,
+      "case_passed": true,
+      "category": "capability_boundary",
+      "exception": null,
+      "id": "priority_or",
+      "interpretation_correct": true,
+      "interpretation_latency_ms": 2824.6781250054482,
+      "prompt_example": false,
+      "safe_outcome_correct": null,
+      "supported": true,
+      "total_latency_ms": 2838.362375012366
+    },
+    {
+      "actual_answer": "0 tickets match the interpreted request.",
+      "actual_interpretation": {
+        "aggregation": null,
+        "filters": [
+          {
+            "case_sensitive": false,
+            "field": "issue_summary",
+            "operator": "contains",
+            "value": "median or percentage"
+          }
+        ],
+        "group_by": null,
+        "intent": "analytics",
+        "limit": 50,
+        "metric": null,
+        "offset": 0,
+        "operation": "count",
+        "result_limit": null,
+        "selected_fields": [],
+        "sort": [],
+        "time_filter": null
+      },
+      "actual_matching_count": 0,
+      "actual_outcome": "ok",
+      "answer_correct": true,
+      "case_passed": true,
+      "category": "capability_boundary",
+      "exception": null,
+      "id": "quoted_statistics",
+      "interpretation_correct": true,
+      "interpretation_latency_ms": 4143.319583003176,
+      "prompt_example": false,
+      "safe_outcome_correct": null,
+      "supported": true,
+      "total_latency_ms": 4157.792625017464
+    },
+    {
+      "actual_answer": "The lowest average response time in hours by agent id is 2.35 for AGT-09.",
+      "actual_interpretation": {
+        "aggregation": "average",
+        "filters": [],
+        "group_by": "agent_id",
+        "intent": "analytics",
+        "limit": 50,
+        "metric": "response_time_hrs",
+        "offset": 0,
+        "operation": "grouped_aggregate",
+        "result_limit": 5,
+        "selected_fields": [],
+        "sort": [
+          {
+            "direction": "asc",
+            "field": "result"
+          }
+        ],
+        "time_filter": null
+      },
+      "actual_matching_count": 12,
+      "actual_outcome": "ok",
+      "answer_correct": true,
+      "case_passed": true,
+      "category": "capability_boundary",
+      "exception": null,
+      "id": "five_agents",
+      "interpretation_correct": true,
+      "interpretation_latency_ms": 5854.202374990564,
+      "prompt_example": false,
+      "safe_outcome_correct": null,
+      "supported": true,
+      "total_latency_ms": 5876.611416984815
+    },
+    {
+      "actual_answer": "Found 173 matching tickets and returned 3 from offset 0.",
+      "actual_interpretation": {
+        "aggregation": null,
+        "filters": [
+          {
+            "field": "status",
+            "operator": "in",
+            "values": [
+              "Open",
+              "Escalated"
+            ]
+          }
+        ],
+        "group_by": null,
+        "intent": "analytics",
+        "limit": 50,
+        "metric": null,
+        "offset": 0,
+        "operation": "list",
+        "result_limit": 3,
+        "selected_fields": [
+          "ticket_id",
+          "created_at",
+          "category",
+          "priority",
+          "status",
+          "response_time_hrs",
+          "resolution_time_hrs",
+          "resolved_at",
+          "agent_id",
+          "customer_rating",
+          "issue_summary",
+          "unresolved_age_hrs",
+          "resolution_elapsed_hrs"
+        ],
+        "sort": [
+          {
+            "direction": "asc",
+            "field": "created_at"
+          }
+        ],
+        "time_filter": null
+      },
+      "actual_matching_count": 173,
+      "actual_outcome": "ok",
+      "answer_correct": true,
+      "case_passed": true,
+      "category": "capability_boundary",
+      "exception": null,
+      "id": "three_oldest",
+      "interpretation_correct": true,
+      "interpretation_latency_ms": 4882.3402500129305,
+      "prompt_example": false,
+      "safe_outcome_correct": null,
+      "supported": true,
+      "total_latency_ms": 4897.458874998847
+    }
+  ]
+}

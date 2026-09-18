@@ -86,7 +86,7 @@ Start the complete application:
 python run.py
 ```
 
-The launcher validates and ingests `support_tickets.csv`, checks the model, starts
+The launcher validates and ingests `support_tickets.csv`, checks and warms the model, starts
 both services, and waits for them to become ready:
 
 - Streamlit UI: [http://127.0.0.1:8501](http://127.0.0.1:8501)
@@ -94,6 +94,12 @@ both services, and waits for them to become ready:
 - Health endpoint: [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health)
 
 Press Ctrl+C once in the launcher terminal to stop both services.
+
+Startup includes bounded Qwen warm-up to move model loading ahead of the first user
+question. Requests ask Ollama to keep the model resident for ten minutes. Warm-up
+adds startup time, and memory pressure can still unload the model. Use
+`python run.py --skip-model-warmup` to opt out; a warm-up failure is reported and does
+not block deterministic API/UI startup.
 
 ## Try the assessment questions
 
@@ -303,9 +309,9 @@ python scripts/audit_repository.py
 
 Verification results:
 
-- 210 deterministic and integration tests passed; 34 live tests are skipped by default
-- 34 of 34 live `qwen2.5:3b` tests passed in 138.26 seconds
-- the 51-case Qwen development/regression evaluation passed 51/51, including all 42
+- 255 deterministic and integration tests passed; 34 live tests are skipped by default
+- 34 of 34 live `qwen2.5:3b` tests passed in 200.27 seconds during remediation
+- the historical 51-case Qwen development/regression evaluation passed 51/51, including all 42
   cases outside exact prompt examples; the report generated at
   `2026-09-18T07:50:15+00:00` records 7,212.6 ms mean end-to-end latency and
   13,610.5 ms P95
@@ -321,15 +327,16 @@ The project acceptance evidence establishes:
 - deterministic calculations reconcile with independent checks;
 - all documented anomaly rules work and explain their flags;
 - FastAPI and Streamlit use the same backend behavior;
-- errors and unsupported questions return structured, honest responses; and
+- tested error and unsupported-question cases return structured responses; and
 - one command starts the configured system.
 
 Natural-language acceptance is limited to the explicitly versioned 51-case
 development/regression set and 34 live checks. A 51/51 run verifies those cases only;
 it does not establish correctness for arbitrary wording. An `ok` result means the
 request passed schema validation and the semantic completeness checks for recognized
-material cues. Unsupported or unrepresentable recognized conditions return
-clarification without executing a partial query. The returned `interpretation` remains
+material cues. The capability gate rejects the unsupported families listed below when their
+documented cues are recognized; those responses execute no data query. This is a
+bounded language policy, not a completeness guarantee for all paraphrases. The returned `interpretation` remains
 part of the evidence and should be reviewed when evaluating wording outside the
 versioned cases.
 
@@ -420,10 +427,19 @@ separately, set `TICKET_API_BASE_URL` to the FastAPI base URL before starting St
   of unrestricted natural language. Ordinary phrasing outside those recognized forms
   can still be misunderstood. Inspect the returned `interpretation` and rephrase when
   it does not match the intended question.
+- Missing/null and recorded/non-null customer ratings and resolution times are
+  supported through typed null predicates. They are never treated as zero.
+- Median, percentile, percentage and ratio calculations, cross-field OR, and
+  simultaneous creation/resolution date predicates are outside this implementation's
+  contract. Recognized requests return clarification with a supported alternative.
+  Same-field categorical alternatives such as High or Critical remain supported.
+- Numeric result counts from 1 to 100 are preserved in `top N`, `bottom N`,
+  `Which 5 agents`, and `Show the 3 oldest` forms. Other linguistic forms still
+  require interpretation review; this is not a claim to cover every formulation.
 - Numeric filters support equality and `>`, `>=`, `<`, and `<=`, including multiple
   AND conditions. Forms such as numeric `between`, cross-field comparisons, or other
-  combinations that cannot be represented safely return clarification rather than a
-  successful partial answer.
+  recognized unsupported comparisons return clarification. Unrecognized phrasing
+  can still be misinterpreted; inspect the returned request.
 - Inference latency varies by hardware and whether Ollama has loaded the model.
 - The application supports analytics and anomaly review; it does not mutate tickets,
   predict future outcomes, or query external customer systems.
@@ -442,7 +458,12 @@ src/ticket_support_ai/
   schemas.py                   shared validated contracts
   analytics.py                 deterministic read-only queries
   anomalies.py                 explainable anomaly rules
-  llm.py                       Ollama/Qwen structured interpretation
+  llm.py                       Ollama transport and interpretation orchestration
+  llm_prompts.py               versioned routing and extraction prompts
+  llm_plans.py                 compact model-facing contracts
+  llm_language.py              bounded lexical cue extraction
+  llm_semantics.py             compilation, reconciliation and semantic checks
+  capabilities.py             explicit supported/unsupported capability boundary
   query.py                     orchestration and answer formatting
   api.py                       FastAPI endpoints and safe errors
   ui.py                        API-only Streamlit interface
@@ -455,3 +476,25 @@ docs/                          detailed design and verification evidence
 ```
 
 Detailed implementation notes are indexed in [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md).
+
+## Capability-boundary regression evidence
+
+The fixes from the strict reassessment have a separate versioned regression set:
+[`evaluation/capability_regression_cases.json`](evaluation/capability_regression_cases.json).
+Its expectations include exact result cardinality/order and zero data-execution time
+for clarification. These cases informed development; they are not blind evidence.
+Reproduce with:
+
+```bash
+python scripts/evaluate_qwen.py --cases evaluation/capability_regression_cases.json --json-output evaluation/capability_regression_results.json --markdown-output docs/CAPABILITY_REGRESSION.md
+```
+
+See [the remediation record](docs/REASSESSMENT_REMEDIATION.md) for current results,
+verification scope, and the prospective evaluation protocol.
+
+The post-remediation 51-case run passed **51/51**, generated at `2026-09-18T12:06:20+00:00`:
+5,375.4 ms mean end-to-end latency and 8,511.8 ms P95. Its separate report is
+[QWEN_EVALUATION_REMEDIATION.md](docs/QWEN_EVALUATION_REMEDIATION.md); the historical
+report above remains unchanged. The capability regression passed 16/16. The prospective
+sample recorded 8/9 against its original labels and 9/9 after an independently checked
+CSV label correction, retained in the remediation record.

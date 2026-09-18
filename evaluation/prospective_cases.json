@@ -1,0 +1,153 @@
+[
+  {
+    "id": "null_paraphrase",
+    "category": "prospective",
+    "prompt_example": false,
+    "question": "Count tickets with missing resolution time.",
+    "expected_interpretation": {
+      "intent": "analytics"
+    },
+    "expected_answer": {
+      "outcome": "ok",
+      "data": {
+        "value": 173
+      }
+    }
+  },
+  {
+    "id": "nonnull_paraphrase",
+    "category": "prospective",
+    "prompt_example": false,
+    "question": "How many tickets have customer rating is not null?",
+    "expected_interpretation": {
+      "intent": "analytics"
+    },
+    "expected_answer": {
+      "outcome": "ok",
+      "data": {
+        "value": 327
+      }
+    }
+  },
+  {
+    "id": "negated_status",
+    "category": "prospective",
+    "prompt_example": false,
+    "question": "How many tickets are not Resolved?",
+    "expected_interpretation": {
+      "intent": "analytics"
+    },
+    "expected_answer": {
+      "outcome": "ok",
+      "data": {
+        "value": 173
+      }
+    }
+  },
+  {
+    "id": "quoted_operator",
+    "category": "prospective",
+    "prompt_example": false,
+    "question": "How many issue summaries contain \"ratio\"?",
+    "expected_interpretation": {
+      "intent": "analytics"
+    },
+    "expected_answer": {
+      "outcome": "ok",
+      "data": {
+        "value": 0
+      }
+    }
+  },
+  {
+    "id": "percentile",
+    "category": "prospective",
+    "prompt_example": false,
+    "question": "Find the 90th percentile resolution time.",
+    "expected_interpretation": {
+      "intent": "clarification"
+    },
+    "expected_answer": {
+      "outcome": "clarification",
+      "data": null,
+      "timing": {
+        "execution_ms": 0.0
+      }
+    }
+  },
+  {
+    "id": "proportion",
+    "category": "prospective",
+    "prompt_example": false,
+    "question": "What proportion of tickets are Open?",
+    "expected_interpretation": {
+      "intent": "clarification"
+    },
+    "expected_answer": {
+      "outcome": "clarification",
+      "data": null,
+      "timing": {
+        "execution_ms": 0.0
+      }
+    }
+  },
+  {
+    "id": "logical_cross_field",
+    "category": "prospective",
+    "prompt_example": false,
+    "question": "Count Billing or Escalated tickets.",
+    "expected_interpretation": {
+      "intent": "clarification"
+    },
+    "expected_answer": {
+      "outcome": "clarification",
+      "data": null,
+      "timing": {
+        "execution_ms": 0.0
+      }
+    }
+  },
+  {
+    "id": "dual_event",
+    "category": "prospective",
+    "prompt_example": false,
+    "question": "Count tickets created in January and completed in February 2024.",
+    "expected_interpretation": {
+      "intent": "clarification"
+    },
+    "expected_answer": {
+      "outcome": "clarification",
+      "data": null,
+      "timing": {
+        "execution_ms": 0.0
+      }
+    }
+  },
+  {
+    "id": "first_two",
+    "category": "prospective",
+    "prompt_example": false,
+    "question": "List the 2 oldest unresolved tickets.",
+    "expected_interpretation": {
+      "intent": "analytics"
+    },
+    "expected_answer": {
+      "outcome": "ok",
+      "data": {
+        "returned_count": 2,
+        "rows": [
+          {
+            "values": {
+              "ticket_id": "TKT-054"
+            }
+          },
+          {
+            "values": {
+              "ticket_id": "TKT-233"
+            }
+          }
+        ]
+      }
+    }
+  }
+]

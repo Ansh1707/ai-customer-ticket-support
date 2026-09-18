@@ -1,0 +1,480 @@
+{
+  "cases": [
+    {
+      "category": "prospective",
+      "expected_answer": {
+        "data": {
+          "value": 173
+        },
+        "outcome": "ok"
+      },
+      "expected_interpretation": {
+        "intent": "analytics"
+      },
+      "id": "null_paraphrase",
+      "prompt_example": false,
+      "question": "Count tickets with missing resolution time."
+    },
+    {
+      "category": "prospective",
+      "expected_answer": {
+        "data": {
+          "value": 327
+        },
+        "outcome": "ok"
+      },
+      "expected_interpretation": {
+        "intent": "analytics"
+      },
+      "id": "nonnull_paraphrase",
+      "prompt_example": false,
+      "question": "How many tickets have customer rating is not null?"
+    },
+    {
+      "category": "prospective",
+      "expected_answer": {
+        "data": {
+          "value": 173
+        },
+        "outcome": "ok"
+      },
+      "expected_interpretation": {
+        "intent": "analytics"
+      },
+      "id": "negated_status",
+      "prompt_example": false,
+      "question": "How many tickets are not Resolved?"
+    },
+    {
+      "category": "prospective",
+      "expected_answer": {
+        "data": {
+          "value": 0
+        },
+        "outcome": "ok"
+      },
+      "expected_interpretation": {
+        "intent": "analytics"
+      },
+      "id": "quoted_operator",
+      "prompt_example": false,
+      "question": "How many issue summaries contain \"ratio\"?"
+    },
+    {
+      "category": "prospective",
+      "expected_answer": {
+        "data": null,
+        "outcome": "clarification",
+        "timing": {
+          "execution_ms": 0.0
+        }
+      },
+      "expected_interpretation": {
+        "intent": "clarification"
+      },
+      "id": "percentile",
+      "prompt_example": false,
+      "question": "Find the 90th percentile resolution time."
+    },
+    {
+      "category": "prospective",
+      "expected_answer": {
+        "data": null,
+        "outcome": "clarification",
+        "timing": {
+          "execution_ms": 0.0
+        }
+      },
+      "expected_interpretation": {
+        "intent": "clarification"
+      },
+      "id": "proportion",
+      "prompt_example": false,
+      "question": "What proportion of tickets are Open?"
+    },
+    {
+      "category": "prospective",
+      "expected_answer": {
+        "data": null,
+        "outcome": "clarification",
+        "timing": {
+          "execution_ms": 0.0
+        }
+      },
+      "expected_interpretation": {
+        "intent": "clarification"
+      },
+      "id": "logical_cross_field",
+      "prompt_example": false,
+      "question": "Count Billing or Escalated tickets."
+    },
+    {
+      "category": "prospective",
+      "expected_answer": {
+        "data": null,
+        "outcome": "clarification",
+        "timing": {
+          "execution_ms": 0.0
+        }
+      },
+      "expected_interpretation": {
+        "intent": "clarification"
+      },
+      "id": "dual_event",
+      "prompt_example": false,
+      "question": "Count tickets created in January and completed in February 2024."
+    },
+    {
+      "category": "prospective",
+      "expected_answer": {
+        "data": {
+          "returned_count": 2,
+          "rows": [
+            {
+              "values": {
+                "ticket_id": "TKT-054"
+              }
+            },
+            {
+              "values": {
+                "ticket_id": "TKT-233"
+              }
+            }
+          ]
+        },
+        "outcome": "ok"
+      },
+      "expected_interpretation": {
+        "intent": "analytics"
+      },
+      "id": "first_two",
+      "prompt_example": false,
+      "question": "List the 2 oldest unresolved tickets."
+    }
+  ],
+  "category_counts": {
+    "prospective": 9
+  },
+  "dataset_sha256": "812984803c7e806803269aaf00da76b1adf21c6165ce58f86fd1bef20bb5ebff",
+  "failed_case_ids": [
+    "quoted_operator"
+  ],
+  "generated_at": "2026-09-18T12:00:19+00:00",
+  "metrics": {
+    "assessment_sample_pass_rate": null,
+    "case_count": 9,
+    "clarification_accuracy": null,
+    "execution_failure_rate": 0.0,
+    "interpretation_accuracy": 1.0,
+    "interpretation_latency_ms": {
+      "maximum": 16159.706041013123,
+      "mean": 6986.273416437649,
+      "median": 7033.250082982704,
+      "p95": 14998.603041010208
+    },
+    "invalid_safe_handling_rate": null,
+    "latency_ms": {
+      "maximum": 16183.81483401754,
+      "mean": 7017.130018447966,
+      "median": 7141.885250021005,
+      "p95": 15023.943483614128
+    },
+    "non_prompt_example_count": 9,
+    "non_prompt_example_pass_rate": 0.8888888888888888,
+    "non_supported_safe_outcome_rate": 1.0,
+    "overall_pass_rate": 0.8888888888888888,
+    "prompt_example_count": 0,
+    "supported_answer_accuracy": 0.8,
+    "supported_case_count": 5,
+    "supported_interpretation_accuracy": 1.0
+  },
+  "model": "qwen2.5:3b",
+  "reference_timestamp": "2024-04-05T00:00:00",
+  "results": [
+    {
+      "actual_answer": "173 tickets match the interpreted request.",
+      "actual_interpretation": {
+        "aggregation": null,
+        "filters": [
+          {
+            "field": "resolution_time_hrs",
+            "operator": "is_null"
+          }
+        ],
+        "group_by": null,
+        "intent": "analytics",
+        "limit": 50,
+        "metric": null,
+        "offset": 0,
+        "operation": "count",
+        "result_limit": null,
+        "selected_fields": [],
+        "sort": [],
+        "time_filter": null
+      },
+      "actual_matching_count": 173,
+      "actual_outcome": "ok",
+      "answer_correct": true,
+      "case_passed": true,
+      "category": "prospective",
+      "exception": null,
+      "id": "null_paraphrase",
+      "interpretation_correct": true,
+      "interpretation_latency_ms": 10496.835415979149,
+      "prompt_example": false,
+      "safe_outcome_correct": null,
+      "supported": true,
+      "total_latency_ms": 10517.879915976664
+    },
+    {
+      "actual_answer": "327 tickets match the interpreted request.",
+      "actual_interpretation": {
+        "aggregation": null,
+        "filters": [
+          {
+            "field": "customer_rating",
+            "operator": "is_not_null"
+          }
+        ],
+        "group_by": null,
+        "intent": "analytics",
+        "limit": 50,
+        "metric": null,
+        "offset": 0,
+        "operation": "count",
+        "result_limit": null,
+        "selected_fields": [],
+        "sort": [],
+        "time_filter": null
+      },
+      "actual_matching_count": 327,
+      "actual_outcome": "ok",
+      "answer_correct": true,
+      "case_passed": true,
+      "category": "prospective",
+      "exception": null,
+      "id": "nonnull_paraphrase",
+      "interpretation_correct": true,
+      "interpretation_latency_ms": 16159.706041013123,
+      "prompt_example": false,
+      "safe_outcome_correct": null,
+      "supported": true,
+      "total_latency_ms": 16183.81483401754
+    },
+    {
+      "actual_answer": "173 tickets match the interpreted request.",
+      "actual_interpretation": {
+        "aggregation": null,
+        "filters": [
+          {
+            "field": "status",
+            "operator": "ne",
+            "value": "Resolved"
+          }
+        ],
+        "group_by": null,
+        "intent": "analytics",
+        "limit": 50,
+        "metric": null,
+        "offset": 0,
+        "operation": "count",
+        "result_limit": null,
+        "selected_fields": [],
+        "sort": [],
+        "time_filter": null
+      },
+      "actual_matching_count": 173,
+      "actual_outcome": "ok",
+      "answer_correct": true,
+      "case_passed": true,
+      "category": "prospective",
+      "exception": null,
+      "id": "negated_status",
+      "interpretation_correct": true,
+      "interpretation_latency_ms": 13256.94854100584,
+      "prompt_example": false,
+      "safe_outcome_correct": null,
+      "supported": true,
+      "total_latency_ms": 13284.136458009016
+    },
+    {
+      "actual_answer": "18 tickets match the interpreted request.",
+      "actual_interpretation": {
+        "aggregation": null,
+        "filters": [
+          {
+            "case_sensitive": false,
+            "field": "issue_summary",
+            "operator": "contains",
+            "value": "ratio"
+          }
+        ],
+        "group_by": null,
+        "intent": "analytics",
+        "limit": 50,
+        "metric": null,
+        "offset": 0,
+        "operation": "count",
+        "result_limit": null,
+        "selected_fields": [],
+        "sort": [],
+        "time_filter": null
+      },
+      "actual_matching_count": 18,
+      "actual_outcome": "ok",
+      "answer_correct": false,
+      "case_passed": false,
+      "category": "prospective",
+      "exception": null,
+      "id": "quoted_operator",
+      "interpretation_correct": true,
+      "interpretation_latency_ms": 7194.236624985933,
+      "prompt_example": false,
+      "safe_outcome_correct": null,
+      "supported": true,
+      "total_latency_ms": 7237.530082988087
+    },
+    {
+      "actual_answer": "Median, percentile, percentage, and ratio calculations are not supported. Ask for a count or an average instead.",
+      "actual_interpretation": {
+        "intent": "clarification",
+        "question": "Median, percentile, percentage, and ratio calculations are not supported. Ask for a count or an average instead.",
+        "reason": "The requested capability cannot be represented safely; no data query was executed."
+      },
+      "actual_matching_count": null,
+      "actual_outcome": "clarification",
+      "answer_correct": null,
+      "case_passed": true,
+      "category": "prospective",
+      "exception": null,
+      "id": "percentile",
+      "interpretation_correct": true,
+      "interpretation_latency_ms": 2180.4682499787305,
+      "prompt_example": false,
+      "safe_outcome_correct": true,
+      "supported": false,
+      "total_latency_ms": 2190.5994580010884
+    },
+    {
+      "actual_answer": "Median, percentile, percentage, and ratio calculations are not supported. Ask for a count or an average instead.",
+      "actual_interpretation": {
+        "intent": "clarification",
+        "question": "Median, percentile, percentage, and ratio calculations are not supported. Ask for a count or an average instead.",
+        "reason": "The requested capability cannot be represented safely; no data query was executed."
+      },
+      "actual_matching_count": null,
+      "actual_outcome": "clarification",
+      "answer_correct": null,
+      "case_passed": true,
+      "category": "prospective",
+      "exception": null,
+      "id": "proportion",
+      "interpretation_correct": true,
+      "interpretation_latency_ms": 2180.6470419978723,
+      "prompt_example": false,
+      "safe_outcome_correct": true,
+      "supported": false,
+      "total_latency_ms": 2192.6475829968695
+    },
+    {
+      "actual_answer": "OR is supported only between values of the same categorical field. Split cross-field or nested Boolean questions into separate queries.",
+      "actual_interpretation": {
+        "intent": "clarification",
+        "question": "OR is supported only between values of the same categorical field. Split cross-field or nested Boolean questions into separate queries.",
+        "reason": "The requested capability cannot be represented safely; no data query was executed."
+      },
+      "actual_matching_count": null,
+      "actual_outcome": "clarification",
+      "answer_correct": null,
+      "case_passed": true,
+      "category": "prospective",
+      "exception": null,
+      "id": "logical_cross_field",
+      "interpretation_correct": true,
+      "interpretation_latency_ms": 1029.9732919957023,
+      "prompt_example": false,
+      "safe_outcome_correct": true,
+      "supported": false,
+      "total_latency_ms": 1052.7292090118863
+    },
+    {
+      "actual_answer": "Only one event date range is supported per question. Ask separately about creation and resolution dates.",
+      "actual_interpretation": {
+        "intent": "clarification",
+        "question": "Only one event date range is supported per question. Ask separately about creation and resolution dates.",
+        "reason": "The requested capability cannot be represented safely; no data query was executed."
+      },
+      "actual_matching_count": null,
+      "actual_outcome": "clarification",
+      "answer_correct": null,
+      "case_passed": true,
+      "category": "prospective",
+      "exception": null,
+      "id": "dual_event",
+      "interpretation_correct": true,
+      "interpretation_latency_ms": 3344.395457999781,
+      "prompt_example": false,
+      "safe_outcome_correct": true,
+      "supported": false,
+      "total_latency_ms": 3352.947375009535
+    },
+    {
+      "actual_answer": "Found 173 matching tickets and returned 2 from offset 0.",
+      "actual_interpretation": {
+        "aggregation": null,
+        "filters": [
+          {
+            "field": "status",
+            "operator": "in",
+            "values": [
+              "Open",
+              "Escalated"
+            ]
+          }
+        ],
+        "group_by": null,
+        "intent": "analytics",
+        "limit": 50,
+        "metric": null,
+        "offset": 0,
+        "operation": "list",
+        "result_limit": 2,
+        "selected_fields": [
+          "ticket_id",
+          "created_at",
+          "category",
+          "priority",
+          "status",
+          "response_time_hrs",
+          "resolution_time_hrs",
+          "resolved_at",
+          "agent_id",
+          "customer_rating",
+          "issue_summary",
+          "unresolved_age_hrs",
+          "resolution_elapsed_hrs"
+        ],
+        "sort": [
+          {
+            "direction": "asc",
+            "field": "created_at"
+          }
+        ],
+        "time_filter": null
+      },
+      "actual_matching_count": 173,
+      "actual_outcome": "ok",
+      "answer_correct": true,
+      "case_passed": true,
+      "category": "prospective",
+      "exception": null,
+      "id": "first_two",
+      "interpretation_correct": true,
+      "interpretation_latency_ms": 7033.250082982704,
+      "prompt_example": false,
+      "safe_outcome_correct": null,
+      "supported": true,
+      "total_latency_ms": 7141.885250021005
+    }
+  ]
+}
