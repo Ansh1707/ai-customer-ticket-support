@@ -102,11 +102,12 @@ Expected failures return a stable envelope:
 |---:|---|
 | 422 | Invalid body, query parameter, question or reference-time selection |
 | 502 | Ollama returned an invalid response or repeatedly invalid structured output |
-| 503 | Dataset, Ollama service or configured model is unavailable |
+| 503 | Dataset is missing/unreadable, or Ollama service/configured model is unavailable |
 | 504 | Local Qwen inference exceeded its configured timeout |
 
-Responses do not expose stack traces. A model outage affects `/query`; health and
-deterministic anomaly detection remain usable.
+Responses do not expose stack traces. A corrupt SQLite snapshot returns the stable
+`dataset_unavailable` envelope with instructions to rebuild it using `python run.py`.
+A model outage affects `/query`; health and deterministic anomaly detection remain usable.
 
 Every response includes `X-Request-ID`. The API terminal emits one matching JSON
 diagnostic with outcome, model/total latency, retry count, validation categories and
@@ -115,9 +116,10 @@ logged; see [DIAGNOSTICS.md](DIAGNOSTICS.md).
 
 ## Verification
 
-- 22 HTTP integration cases cover readiness, query results, custom references,
+- 28 HTTP integration cases cover readiness, query results, custom references,
   validation, anomaly periods and pagination, dependency isolation, safe errors,
-  missing data and OpenAPI coverage.
+  missing/corrupt data and OpenAPI coverage. Corrupt-database checks cover `/health`,
+  `/query`, and `/anomalies`, JSON envelopes, request IDs, and diagnostic correlation.
 - The opt-in live API test passed `/health` and `/query` through FastAPI against the
   installed `qwen2.5:3b` model in 13.08 seconds.
 - The documented Uvicorn command was started on localhost and a real-socket

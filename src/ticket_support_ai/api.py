@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import sqlite3
 from datetime import datetime
 from pathlib import Path
 from time import perf_counter
@@ -49,6 +50,10 @@ from ticket_support_ai.schemas import (
     RelativePeriod,
     TicketTimeField,
     TimeFilter,
+)
+
+_DATASET_UNREADABLE_MESSAGE = (
+    "The runtime ticket database is unreadable. Rebuild it by running python run.py."
 )
 
 
@@ -264,9 +269,7 @@ def create_app(
             reference_mode,
             custom_reference=custom_reference,
         )
-        result = detect_anomalies(
-            resolved_database, anomaly_request, reference_clock
-        )
+        result = detect_anomalies(resolved_database, anomaly_request, reference_clock)
         record_outcome("ok")
         return result
 
@@ -277,6 +280,11 @@ def _dataset_health(database_path: Path) -> DatasetHealth:
     try:
         metadata = read_ingestion_metadata(database_path)
         actual_count = len(read_tickets(database_path))
+    except sqlite3.DatabaseError:
+        return DatasetHealth(
+            available=False,
+            error=_DATASET_UNREADABLE_MESSAGE,
+        )
     except (FileNotFoundError, OSError, RuntimeError, ValueError) as exc:
         return DatasetHealth(available=False, error=str(exc))
     if actual_count != metadata.row_count:
@@ -433,6 +441,18 @@ def _install_error_handlers(application: FastAPI) -> None:
             503,
             "dataset_unavailable",
             "The ticket dataset is not available.",
+        )
+
+    @application.exception_handler(sqlite3.DatabaseError)
+    async def unreadable_database_error(
+        request: Request,
+        exc: sqlite3.DatabaseError,
+    ) -> JSONResponse:
+        del request, exc
+        return _error_response(
+            503,
+            "dataset_unavailable",
+            _DATASET_UNREADABLE_MESSAGE,
         )
 
     @application.exception_handler(RuntimeError)

@@ -52,6 +52,11 @@ The 34 live tests cover:
 - regression counts, filters, lists, means, grouped rankings, and relative dates;
 - quoted-literal isolation and clarification when a material comparison cannot be
   represented safely;
+- corrupt SQLite behavior across health, query, and anomaly endpoints, including
+  structured 503 responses and request-ID correlation;
+- exact cardinality and order for ranked evaluation rows; and
+- the custom-reference selector-to-input-to-submit UI transition with no premature
+  query execution;
 - paraphrases, ambiguity, unsupported mutation, and instruction-injection resistance;
 - FastAPI health and natural-language query behavior through the real local model.
 
@@ -82,7 +87,7 @@ python run.py
 The full live suite requires Ollama to be running with `qwen2.5:3b` installed. The
 normal suite remains fast and deterministic without Ollama.
 
-After the final LLM-integration work, the suite passes 208
+After the final code-quality regression work, the suite passes 209
 deterministic/integration tests and all 34 live tests in 138.26 seconds. The added
 coverage includes independent raw-CSV facts, strict 12-hour elapsed boundaries, small
 anomaly baselines, diagnostics, public pagination, launcher-started Ollama, and the

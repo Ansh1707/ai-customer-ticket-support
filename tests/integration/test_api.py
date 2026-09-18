@@ -427,6 +427,69 @@ def test_missing_dataset_degrades_health_and_blocks_data_endpoints(
     assert anomalies.json()["error"]["code"] == "dataset_unavailable"
 
 
+def test_corrupt_database_uses_controlled_dataset_error_contract(
+    tmp_path: Path,
+    diagnostic_log: pytest.LogCaptureFixture,
+) -> None:
+    corrupt = tmp_path / "corrupt.db"
+    corrupt.write_bytes(b"this is not a SQLite database")
+    app = create_app(corrupt, interpreter=FakeInterpreter())
+
+    health = request(app, "GET", "/health")
+    anomalies = request(app, "GET", "/anomalies")
+    query = request(
+        app,
+        "POST",
+        "/query",
+        json={"question": "How many tickets are open?"},
+    )
+
+    assert health.status_code == 200
+    assert health.json()["status"] == "degraded"
+    assert health.json()["dataset"] == {
+        "available": False,
+        "row_count": None,
+        "warning_count": None,
+        "source_sha256": None,
+        "error": (
+            "The runtime ticket database is unreadable. Rebuild it by running "
+            "python run.py."
+        ),
+    }
+    for response in (health, anomalies, query):
+        assert response.headers["X-Request-ID"]
+        assert response.headers["content-type"].startswith("application/json")
+    for response in (anomalies, query):
+        assert response.status_code == 503
+        assert response.json() == {
+            "error": {
+                "code": "dataset_unavailable",
+                "message": (
+                    "The runtime ticket database is unreadable. Rebuild it by running "
+                    "python run.py."
+                ),
+                "details": [],
+            }
+        }
+
+    events = [
+        json.loads(record.message)
+        for record in diagnostic_log.records
+        if '"event":"request_complete"' in record.message
+    ]
+    assert [event["status_code"] for event in events] == [200, 503, 503]
+    assert [event["outcome"] for event in events] == ["degraded", "error", "error"]
+    assert [event.get("error_code") for event in events] == [
+        None,
+        "dataset_unavailable",
+        "dataset_unavailable",
+    ]
+    assert len({event["request_id"] for event in events}) == 3
+    assert [
+        response.headers["X-Request-ID"] for response in (health, anomalies, query)
+    ] == [event["request_id"] for event in events]
+
+
 def test_openapi_documents_all_required_endpoints_and_constraints(
     database: Path,
 ) -> None:

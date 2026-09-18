@@ -303,7 +303,7 @@ python scripts/audit_repository.py
 
 Verification results:
 
-- 208 deterministic and integration tests passed; 34 live tests are skipped by default
+- 209 deterministic and integration tests passed; 34 live tests are skipped by default
 - 34 of 34 live `qwen2.5:3b` tests passed in 138.26 seconds
 - the 51-case Qwen development/regression evaluation passed 51/51, including all 42
   cases outside exact prompt examples; mean latency was 7.21 seconds and P95 was 13.61 seconds
@@ -372,6 +372,12 @@ the model is already loaded.
 Restore the original `support_tickets.csv`. Validation rejects missing or extra
 columns, invalid values, duplicate IDs, malformed timestamps, and inconsistent nulls.
 The database refresh is transactional, so a failed import does not leave partial data.
+
+### Runtime database is unreadable
+
+The API returns HTTP 503 with `dataset_unavailable`, an actionable rebuild message,
+and `X-Request-ID` when SQLite reports a corrupt or unreadable snapshot. Run
+`python run.py` to validate the CSV and rebuild the generated runtime database.
 
 ### UI cannot reach the API
 

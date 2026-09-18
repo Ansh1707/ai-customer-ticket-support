@@ -103,7 +103,7 @@ the already captured output in the README rather than repeatedly submitting.
 
 Show the README testing section and reports rather than running long suites live:
 
-- 208 deterministic/integration tests;
+- 209 deterministic/integration tests;
 - 34/34 live-Qwen tests;
 - 51/51 labeled development/regression cases, including all five assessment samples
   and 42 cases outside the exact prompt examples;

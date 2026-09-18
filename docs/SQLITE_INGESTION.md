@@ -62,4 +62,4 @@ The singleton `ingestion_metadata` table records:
 | SQLite `quick_check` | `ok` |
 | Repeated source ingestion | Existing snapshot reused |
 
-Automated tests also verify full replacement for changed sources, rollback after a simulated mid-refresh failure, database constraints, read-only connections, and prevention of database creation when CSV validation fails.
+Automated tests also verify full replacement for changed sources, rollback after a simulated mid-refresh failure, database constraints, read-only connections, prevention of database creation when CSV validation fails, and controlled API behavior for a separate corrupt runtime database.

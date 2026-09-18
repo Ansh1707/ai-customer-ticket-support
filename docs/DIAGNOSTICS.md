@@ -50,7 +50,10 @@ appropriate.
 
 Integration tests verify successful and failed records, response-header correlation,
 retry and validation counters, timing fields, error codes, and absence of the private
-question and invalid model content. A real launcher run also confirms that the JSON
+question and invalid model content. A separate corrupt SQLite snapshot verifies that
+health degrades cleanly and both data endpoints return correlated
+`dataset_unavailable` diagnostics instead of plain HTTP 500 responses. A real launcher
+run also confirms that the JSON
 record is visible in the terminal used to start `python run.py`.
 
 The final local smoke test correlated a successful Qwen request through request ID

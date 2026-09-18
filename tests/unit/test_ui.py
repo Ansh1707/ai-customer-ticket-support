@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from datetime import date, time
 from typing import Any
 
 import httpx
@@ -299,3 +300,16 @@ def test_custom_reference_controls_appear_before_query_submission() -> None:
     assert client.query_calls == []
     assert any(item.label == "Reference date" for item in app.date_input)
     assert any(item.label == "Reference clock time" for item in app.time_input)
+
+    next(item for item in app.date_input if item.label == "Reference date").set_value(
+        date(2024, 3, 15)
+    )
+    next(
+        item for item in app.time_input if item.label == "Reference clock time"
+    ).set_value(time(9, 30))
+    _button(app, "Ask Qwen").click()
+    app.run()
+
+    assert client.query_calls == [
+        (SAMPLE_QUESTIONS[0], "custom", "2024-03-15T09:30:00", 50, 0)
+    ]
