@@ -1,6 +1,6 @@
 # Qwen2.5 3B Evaluation Report
 
-Generated: 2026-09-18T07:28:59+00:00
+Generated: 2026-09-18T07:50:15+00:00
 
 Model: `qwen2.5:3b`
 Dataset SHA-256: `812984803c7e806803269aaf00da76b1adf21c6165ce58f86fd1bef20bb5ebff`
@@ -10,15 +10,15 @@ Dataset reference: `2024-04-05T00:00:00`
 
 | Metric | Result |
 |---|---:|
-| Evaluation cases | 39 |
-| Clearly supported cases | 34 |
-| Held-out cases | 30 |
+| Evaluation cases | 51 |
+| Clearly supported cases | 45 |
+| Cases outside exact prompt examples | 42 |
 | Overall pass rate | 100.0% |
 | Interpretation accuracy | 100.0% |
 | Supported interpretation accuracy | 100.0% |
 | Supported answer accuracy | 100.0% |
 | Assessment sample pass rate | 100.0% |
-| Held-out pass rate | 100.0% |
+| Non-prompt-example regression pass rate | 100.0% |
 | Clarification accuracy | 100.0% |
 | Invalid/prompt-injection safe handling | 100.0% |
 | Execution failure rate | 0.0% |
@@ -27,52 +27,64 @@ Dataset reference: `2024-04-05T00:00:00`
 
 | Measurement | Mean | Median | P95 | Maximum |
 |---|---:|---:|---:|---:|
-| End-to-end | 5824.2 | 4422.0 | 13232.2 | 16816.8 |
-| Interpretation | 5800.5 | 4407.3 | 13196.3 | 16805.4 |
+| End-to-end | 7212.6 | 6783.6 | 13610.5 | 19329.1 |
+| Interpretation | 7148.4 | 6713.9 | 13488.6 | 19308.9 |
 
 ## Case results
 
-| ID | Category | Held out | Interpretation | Answer/safe outcome | Pass | Latency ms |
+| ID | Category | Prompt example | Interpretation | Answer/safe outcome | Pass | Latency ms |
 |---|---|---:|---:|---:|---:|---:|
-| sample_open_count | assessment_sample | no | pass | pass | pass | 16816.8 |
-| sample_agent_this_month | assessment_sample | no | pass | pass | pass | 9988.7 |
-| sample_critical_over_12 | assessment_sample | no | pass | pass | pass | 8515.0 |
-| sample_technical_rating | assessment_sample | no | pass | pass | pass | 3858.4 |
-| sample_weekly_anomaly | assessment_sample | no | pass | pass | pass | 12842.3 |
-| paraphrase_unresolved | unseen_paraphrase | yes | pass | pass | pass | 2223.9 |
-| combined_critical_unresolved | combined_filters | yes | pass | pass | pass | 6063.9 |
-| combined_priority_membership | combined_filters | yes | pass | pass | pass | 2393.9 |
-| combined_open_technical | combined_filters | yes | pass | pass | pass | 5229.1 |
-| combined_escalated_billing | combined_filters | yes | pass | pass | pass | 8499.4 |
-| aggregate_billing_resolution | rankings_and_ratings | yes | pass | pass | pass | 4400.3 |
-| ranking_lowest_agent_rating | rankings_and_ratings | yes | pass | pass | pass | 5740.3 |
-| ranking_category_response | rankings_and_ratings | yes | pass | pass | pass | 4762.3 |
-| explicit_march_resolution_ranking | explicit_dates | yes | pass | pass | pass | 16741.4 |
-| relative_created_last_month | relative_dates | yes | pass | pass | pass | 7855.2 |
-| relative_created_this_week | relative_dates | yes | pass | pass | pass | 5269.0 |
-| relative_resolved_this_month | relative_dates | yes | pass | pass | pass | 5213.3 |
-| aggregate_sum_critical_response | aggregates | yes | pass | pass | pass | 9605.7 |
-| aggregate_min_technical_resolution | aggregates | yes | pass | pass | pass | 8270.9 |
-| summary_dashboard_count | literal_summary_search | yes | pass | pass | pass | 3260.6 |
-| summary_payment_list | literal_summary_search | yes | pass | pass | pass | 2857.5 |
-| group_count_category | grouping | yes | pass | pass | pass | 4355.6 |
-| aggregate_max_resolution | aggregates | yes | pass | pass | pass | 3367.1 |
-| anomaly_all_rules | anomalies | yes | pass | pass | pass | 2624.7 |
-| anomaly_overdue | anomalies | yes | pass | pass | pass | 3532.0 |
-| anomaly_source_timing | anomalies | no | pass | pass | pass | 2586.6 |
-| explicit_created_range | explicit_dates | yes | pass | pass | pass | 5646.7 |
-| ambiguous_best_agent | ambiguous | no | pass | pass | pass | 4329.2 |
-| ambiguous_context_reference | ambiguous | yes | pass | pass | pass | 6398.6 |
-| unsupported_delete | unsupported | no | pass | pass | pass | 4077.1 |
-| unsupported_prediction | unsupported | yes | pass | pass | pass | 3429.8 |
-| prompt_injection | prompt_injection | no | pass | pass | pass | 1933.5 |
-| regression_negated_priority | negation | yes | pass | pass | pass | 2814.2 |
-| regression_unresolved_synonym | unseen_paraphrase | yes | pass | pass | pass | 2087.8 |
-| regression_created_date_precedence | relative_dates | yes | pass | pass | pass | 4422.0 |
-| regression_explicit_anomaly_range | explicit_dates | yes | pass | pass | pass | 3639.3 |
-| regression_multiple_numeric_filters | combined_filters | yes | pass | pass | pass | 7214.1 |
-| regression_top_three_agents | rankings_and_ratings | yes | pass | pass | pass | 10483.8 |
-| regression_exact_rating | combined_filters | yes | pass | pass | pass | 3793.4 |
+| sample_open_count | assessment_sample | yes | pass | pass | pass | 19329.1 |
+| sample_agent_this_month | assessment_sample | yes | pass | pass | pass | 10445.0 |
+| sample_critical_over_12 | assessment_sample | yes | pass | pass | pass | 8177.0 |
+| sample_technical_rating | assessment_sample | yes | pass | pass | pass | 4137.7 |
+| sample_weekly_anomaly | assessment_sample | yes | pass | pass | pass | 14960.7 |
+| paraphrase_unresolved | unseen_paraphrase | no | pass | pass | pass | 7694.0 |
+| combined_critical_unresolved | combined_filters | no | pass | pass | pass | 12260.4 |
+| combined_priority_membership | combined_filters | no | pass | pass | pass | 4386.1 |
+| combined_open_technical | combined_filters | no | pass | pass | pass | 7739.5 |
+| combined_escalated_billing | combined_filters | no | pass | pass | pass | 4686.6 |
+| aggregate_billing_resolution | rankings_and_ratings | no | pass | pass | pass | 6087.9 |
+| ranking_lowest_agent_rating | rankings_and_ratings | no | pass | pass | pass | 9422.7 |
+| ranking_category_response | rankings_and_ratings | no | pass | pass | pass | 9635.3 |
+| explicit_march_resolution_ranking | explicit_dates | no | pass | pass | pass | 10166.0 |
+| relative_created_last_month | relative_dates | no | pass | pass | pass | 4480.1 |
+| relative_created_this_week | relative_dates | no | pass | pass | pass | 4806.8 |
+| relative_resolved_this_month | relative_dates | no | pass | pass | pass | 6211.6 |
+| aggregate_sum_critical_response | aggregates | no | pass | pass | pass | 4798.1 |
+| aggregate_min_technical_resolution | aggregates | no | pass | pass | pass | 5165.1 |
+| summary_dashboard_count | literal_summary_search | no | pass | pass | pass | 3748.7 |
+| summary_payment_list | literal_summary_search | no | pass | pass | pass | 3532.2 |
+| group_count_category | grouping | no | pass | pass | pass | 4601.2 |
+| aggregate_max_resolution | aggregates | no | pass | pass | pass | 3928.3 |
+| anomaly_all_rules | anomalies | no | pass | pass | pass | 3964.9 |
+| anomaly_overdue | anomalies | no | pass | pass | pass | 8839.9 |
+| anomaly_source_timing | anomalies | yes | pass | pass | pass | 7712.7 |
+| explicit_created_range | explicit_dates | no | pass | pass | pass | 11862.6 |
+| ambiguous_best_agent | ambiguous | yes | pass | pass | pass | 8108.6 |
+| ambiguous_context_reference | ambiguous | no | pass | pass | pass | 10327.2 |
+| unsupported_delete | unsupported | yes | pass | pass | pass | 6783.6 |
+| unsupported_prediction | unsupported | no | pass | pass | pass | 7698.1 |
+| prompt_injection | prompt_injection | yes | pass | pass | pass | 4374.2 |
+| regression_negated_priority | negation | no | pass | pass | pass | 4533.7 |
+| regression_unresolved_synonym | unseen_paraphrase | no | pass | pass | pass | 3090.2 |
+| regression_created_date_precedence | relative_dates | no | pass | pass | pass | 7461.3 |
+| regression_explicit_anomaly_range | explicit_dates | no | pass | pass | pass | 5638.4 |
+| regression_multiple_numeric_filters | combined_filters | no | pass | pass | pass | 9451.9 |
+| regression_top_three_agents | rankings_and_ratings | no | pass | pass | pass | 8505.9 |
+| regression_exact_rating | combined_filters | no | pass | pass | pass | 5453.0 |
+| contrast_quoted_resolved_summary | contrast_quoted_literals | no | pass | pass | pass | 4013.9 |
+| contrast_resolved_status | contrast_quoted_literals | no | pass | pass | pass | 4493.9 |
+| contrast_quoted_critical_summary | contrast_quoted_literals | no | pass | pass | pass | 4487.2 |
+| contrast_critical_priority | contrast_polarity | no | pass | pass | pass | 2977.4 |
+| contrast_excluding_critical | contrast_polarity | no | pass | pass | pass | 3265.7 |
+| contrast_created_march | contrast_date_field | no | pass | pass | pass | 7425.8 |
+| contrast_resolved_march | contrast_date_field | no | pass | pass | pass | 16184.3 |
+| contrast_single_numeric_condition | contrast_numeric_arity | no | pass | pass | pass | 8015.3 |
+| contrast_two_numeric_conditions | contrast_numeric_arity | no | pass | pass | pass | 11021.1 |
+| contrast_exact_rating | contrast_numeric_operator | no | pass | pass | pass | 8954.3 |
+| contrast_greater_rating | contrast_numeric_operator | no | pass | pass | pass | 5584.2 |
+| prompt_injection_mutation_variant | prompt_injection | no | pass | pass | pass | 7212.6 |
 
 ## Failures
 
@@ -82,4 +94,4 @@ No evaluation cases failed.
 
 The Step 25 target was met.
 
-The benchmark contains expected interpretations and independently checked answer evidence. Prompt-exposed cases are labeled; all other cases remain held out from exact prompt examples. Metrics reflect this recorded run and are not a guarantee of future model behavior.
+The benchmark contains expected interpretations and independently checked answer evidence. Cases outside exact prompt examples are development and regression cases: prior failures may have influenced their prompts or safeguards. They are not an untouched final test set. Metrics reflect this recorded run and are not evidence of independent generalization or a guarantee of future model behavior.

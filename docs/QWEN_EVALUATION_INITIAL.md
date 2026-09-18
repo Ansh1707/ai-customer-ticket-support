@@ -1,5 +1,10 @@
 # Qwen2.5 3B Evaluation Report
 
+> Historical development baseline. In this report, “held out” meant only “absent
+> from exact prompt examples.” The cases were later inspected and used to improve
+> prompts and safeguards, so this artifact is regression history rather than evidence
+> from an untouched final test set.
+
 Generated: 2026-09-17T16:50:20+00:00
 
 Model: `qwen2.5:3b`
@@ -157,4 +162,4 @@ Actual answer: 500 tickets match the interpreted request.
 
 The Step 25 target was not fully met; failures are reported above.
 
-The benchmark contains expected interpretations and independently checked answer evidence. Prompt-exposed cases are labeled; all other cases remain held out from exact prompt examples. Metrics reflect this recorded run and are not a guarantee of future model behavior.
+The benchmark contains expected interpretations and independently checked answer evidence. The historical “held out” label means only that a case was absent from exact prompt examples. Because failures were inspected and informed later changes, these cases are now treated as development/regression evidence rather than an untouched final test set.

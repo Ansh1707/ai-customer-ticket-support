@@ -38,6 +38,14 @@ by the deterministic executor. The router has one separate responsibility: selec
 the detail schema. It does not calculate filters or results. API pagination is applied
 after interpretation and cannot replace the question's semantic result limit.
 
+A semantic completeness gate then compares the compiled request with independently
+extracted material cues: positive and negative categorical values, unresolved status,
+every supported numeric comparison, summary-search text, date field and range, anomaly
+rule, and requested result count. A mismatch returns clarification with zero query
+execution instead of an `ok` answer from a partial plan. Quoted spans are masked while
+extracting filter and routing cues, then recovered only as literal summary-search text;
+for example, `summaries contain "resolved"` cannot create `status = Resolved`.
+
 ## Model controls
 
 - Model: `qwen2.5:3b`
@@ -74,7 +82,7 @@ No API key or paid service is used.
 ## Live verification
 
 The opt-in live suite calls the installed model when `RUN_LIVE_OLLAMA=1`. The latest
-complete run passed 32 interpreter, orchestration, and API checks in 147.66 seconds,
+complete run passed 34 interpreter, orchestration, and API checks in 138.26 seconds,
 including:
 
 - all five assessment sample questions;
@@ -83,6 +91,8 @@ including:
 - ambiguous ranking routed to clarification;
 - ticket deletion routed to unsupported;
 - prompt-injection text routed to unsupported; and
+- quoted `"resolved"` summary text preserved without adding a status filter;
+- an unsupported numeric range stopped at clarification with zero execution time; and
 - live readiness identifying `qwen2.5:3b` and the running Ollama version.
 
 The normal test suite skips live calls so it remains deterministic and does not require

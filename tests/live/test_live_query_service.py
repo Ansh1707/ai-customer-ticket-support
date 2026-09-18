@@ -16,6 +16,7 @@ from ticket_support_ai.schemas import (
     CountAnalyticsResult,
     GroupedAnalyticsResult,
     ListAnalyticsResult,
+    QueryOutcome,
 )
 
 pytestmark = [
@@ -53,9 +54,7 @@ def test_live_monthly_agent_ranking(service: QueryService) -> None:
     result = ask(service, "Which agent resolved the most tickets this month?")
 
     assert isinstance(result.data, GroupedAnalyticsResult)
-    assert [(row.group_value, row.value) for row in result.data.rows] == [
-        ("AGT-07", 1)
-    ]
+    assert [(row.group_value, row.value) for row in result.data.rows] == [("AGT-07", 1)]
     assert "AGT-07" in result.answer
     assert "2024-04-01" in result.answer
 
@@ -106,14 +105,14 @@ def test_live_source_timing_inconsistencies(service: QueryService) -> None:
     assert "28 timing-inconsistency" in result.answer
 
 
-def test_live_held_out_multi_priority_count(service: QueryService) -> None:
+def test_live_regression_multi_priority_count(service: QueryService) -> None:
     result = ask(service, "How many High or Critical priority tickets are there?")
 
     assert isinstance(result.data, CountAnalyticsResult)
     assert result.data.value == 189
 
 
-def test_live_held_out_billing_resolution_average(service: QueryService) -> None:
+def test_live_regression_billing_resolution_average(service: QueryService) -> None:
     result = ask(service, "Find the mean resolution time for Billing cases.")
 
     assert isinstance(result.data, AggregateAnalyticsResult)
@@ -121,14 +120,14 @@ def test_live_held_out_billing_resolution_average(service: QueryService) -> None
     assert result.data.contributing_count == 101
 
 
-def test_live_held_out_filtered_list(service: QueryService) -> None:
+def test_live_regression_filtered_list(service: QueryService) -> None:
     result = ask(service, "Show me open Technical tickets.")
 
     assert isinstance(result.data, ListAnalyticsResult)
     assert result.data.matching_count == 30
 
 
-def test_live_held_out_category_response_ranking(service: QueryService) -> None:
+def test_live_regression_category_response_ranking(service: QueryService) -> None:
     result = ask(service, "Which category has the highest average response time?")
 
     assert isinstance(result.data, GroupedAnalyticsResult)
@@ -136,7 +135,7 @@ def test_live_held_out_category_response_ranking(service: QueryService) -> None:
     assert result.data.rows[0].value == pytest.approx(2.6697368421052627)
 
 
-def test_live_held_out_creation_period_count(service: QueryService) -> None:
+def test_live_regression_creation_period_count(service: QueryService) -> None:
     result = ask(service, "How many tickets were created last month?")
 
     assert isinstance(result.data, CountAnalyticsResult)
@@ -159,7 +158,9 @@ def test_live_unresolved_status_synonym(service: QueryService) -> None:
     assert result.data.value == 173
 
 
-def test_live_explicit_created_period_with_resolved_status(service: QueryService) -> None:
+def test_live_explicit_created_period_with_resolved_status(
+    service: QueryService,
+) -> None:
     result = ask(service, "How many resolved tickets were created last month?")
 
     assert isinstance(result.data, CountAnalyticsResult)
@@ -220,3 +221,29 @@ def test_live_exact_customer_rating_filter(service: QueryService) -> None:
 
     assert isinstance(result.data, CountAnalyticsResult)
     assert result.data.value == 14
+
+
+def test_live_quoted_summary_value_is_only_literal_text(service: QueryService) -> None:
+    result = ask(service, 'How many issue summaries contain "resolved"?')
+
+    assert result.outcome is QueryOutcome.OK
+    assert isinstance(result.data, CountAnalyticsResult)
+    assert result.data.value == 0
+    assert len(result.interpretation.filters) == 1
+    summary_filter = result.interpretation.filters[0]
+    assert summary_filter.field == "issue_summary"
+    assert summary_filter.value == "resolved"
+
+
+def test_live_unsupported_numeric_form_clarifies_without_execution(
+    service: QueryService,
+) -> None:
+    result = ask(
+        service,
+        "How many tickets have customer rating between 2 and 4?",
+    )
+
+    assert result.outcome is QueryOutcome.CLARIFICATION
+    assert result.data is None
+    assert "unsupported numeric comparison" in result.answer
+    assert result.timing.execution_ms == 0

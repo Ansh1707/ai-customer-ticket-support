@@ -81,9 +81,7 @@ async def evaluate(cases: list[dict[str, Any]]) -> dict[str, Any]:
                     "actual_interpretation": payload["interpretation"],
                     "actual_answer": payload["answer"],
                     "actual_matching_count": payload["matching_count"],
-                    "interpretation_latency_ms": payload["timing"][
-                        "interpretation_ms"
-                    ],
+                    "interpretation_latency_ms": payload["timing"]["interpretation_ms"],
                     "total_latency_ms": payload["timing"]["total_ms"],
                 }
             )
@@ -99,18 +97,14 @@ def _build_report(
 ) -> dict[str, Any]:
     supported = [item for item in results if item["supported"]]
     non_supported = [item for item in results if not item["supported"]]
-    clarification = [
-        item for item in results if item["category"] == "ambiguous"
-    ]
+    clarification = [item for item in results if item["category"] == "ambiguous"]
     invalid = [
         item
         for item in results
         if item["category"] in {"unsupported", "prompt_injection"}
     ]
-    assessment = [
-        item for item in results if item["category"] == "assessment_sample"
-    ]
-    held_out = [item for item in results if not item["prompt_example"]]
+    assessment = [item for item in results if item["category"] == "assessment_sample"]
+    non_prompt_examples = [item for item in results if not item["prompt_example"]]
     latencies = [item["total_latency_ms"] for item in results]
     interpretation_latencies = [
         item["interpretation_latency_ms"]
@@ -122,20 +116,16 @@ def _build_report(
         "case_count": len(results),
         "supported_case_count": len(supported),
         "prompt_example_count": sum(item["prompt_example"] for item in results),
-        "held_out_count": len(held_out),
+        "non_prompt_example_count": len(non_prompt_examples),
         "overall_pass_rate": _rate(results, "case_passed"),
         "interpretation_accuracy": _rate(results, "interpretation_correct"),
-        "supported_interpretation_accuracy": _rate(
-            supported, "interpretation_correct"
-        ),
+        "supported_interpretation_accuracy": _rate(supported, "interpretation_correct"),
         "supported_answer_accuracy": _rate(supported, "answer_correct"),
         "assessment_sample_pass_rate": _rate(assessment, "case_passed"),
-        "held_out_pass_rate": _rate(held_out, "case_passed"),
+        "non_prompt_example_pass_rate": _rate(non_prompt_examples, "case_passed"),
         "clarification_accuracy": _rate(clarification, "case_passed"),
         "invalid_safe_handling_rate": _rate(invalid, "case_passed"),
-        "non_supported_safe_outcome_rate": _rate(
-            non_supported, "safe_outcome_correct"
-        ),
+        "non_supported_safe_outcome_rate": _rate(non_supported, "safe_outcome_correct"),
         "execution_failure_rate": sum(item["exception"] is not None for item in results)
         / len(results),
         "latency_ms": {
@@ -158,9 +148,7 @@ def _build_report(
         "reference_timestamp": "2024-04-05T00:00:00",
         "metrics": metrics,
         "category_counts": dict(Counter(item["category"] for item in results)),
-        "failed_case_ids": [
-            item["id"] for item in results if not item["case_passed"]
-        ],
+        "failed_case_ids": [item["id"] for item in results if not item["case_passed"]],
         "results": results,
         "cases": cases,
     }
@@ -197,9 +185,13 @@ def _matches_interpretation(actual: Any, expected: Any) -> bool:
             for key, value in expected.items()
         )
     if isinstance(expected, list):
-        return isinstance(actual, list) and len(actual) == len(expected) and all(
-            any(_matches_interpretation(item, expected_item) for item in actual)
-            for expected_item in expected
+        return (
+            isinstance(actual, list)
+            and len(actual) == len(expected)
+            and all(
+                any(_matches_interpretation(item, expected_item) for item in actual)
+                for expected_item in expected
+            )
         )
     return _matches_subset(actual, expected)
 
@@ -238,13 +230,13 @@ def _markdown(report: dict[str, Any]) -> str:
         "|---|---:|",
         f"| Evaluation cases | {metrics['case_count']} |",
         f"| Clearly supported cases | {metrics['supported_case_count']} |",
-        f"| Held-out cases | {metrics['held_out_count']} |",
+        f"| Cases outside exact prompt examples | {metrics['non_prompt_example_count']} |",
         f"| Overall pass rate | {percent(metrics['overall_pass_rate'])} |",
         f"| Interpretation accuracy | {percent(metrics['interpretation_accuracy'])} |",
         f"| Supported interpretation accuracy | {percent(metrics['supported_interpretation_accuracy'])} |",
         f"| Supported answer accuracy | {percent(metrics['supported_answer_accuracy'])} |",
         f"| Assessment sample pass rate | {percent(metrics['assessment_sample_pass_rate'])} |",
-        f"| Held-out pass rate | {percent(metrics['held_out_pass_rate'])} |",
+        f"| Non-prompt-example regression pass rate | {percent(metrics['non_prompt_example_pass_rate'])} |",
         f"| Clarification accuracy | {percent(metrics['clarification_accuracy'])} |",
         f"| Invalid/prompt-injection safe handling | {percent(metrics['invalid_safe_handling_rate'])} |",
         f"| Execution failure rate | {percent(metrics['execution_failure_rate'])} |",
@@ -258,7 +250,7 @@ def _markdown(report: dict[str, Any]) -> str:
         "",
         "## Case results",
         "",
-        "| ID | Category | Held out | Interpretation | Answer/safe outcome | Pass | Latency ms |",
+        "| ID | Category | Prompt example | Interpretation | Answer/safe outcome | Pass | Latency ms |",
         "|---|---|---:|---:|---:|---:|---:|",
     ]
     cases_by_id = {case["id"]: case for case in report["cases"]}
@@ -270,7 +262,7 @@ def _markdown(report: dict[str, Any]) -> str:
         )
         lines.append(
             f"| {item['id']} | {item['category']} | "
-            f"{'no' if item['prompt_example'] else 'yes'} | "
+            f"{'yes' if item['prompt_example'] else 'no'} | "
             f"{_mark(item['interpretation_correct'])} | {_mark(answer_field)} | "
             f"{_mark(item['case_passed'])} | {item['total_latency_ms']:.1f} |"
         )
@@ -314,9 +306,11 @@ def _markdown(report: dict[str, Any]) -> str:
             "",
             (
                 "The benchmark contains expected interpretations and independently "
-                "checked answer evidence. Prompt-exposed cases are labeled; all other "
-                "cases remain held out from exact prompt examples. Metrics reflect this "
-                "recorded run and are not a guarantee of future model behavior."
+                "checked answer evidence. Cases outside exact prompt examples are "
+                "development and regression cases: prior failures may have influenced "
+                "their prompts or safeguards. They are not an untouched final test set. "
+                "Metrics reflect this recorded run and are not evidence of independent "
+                "generalization or a guarantee of future model behavior."
             ),
             "",
         ]

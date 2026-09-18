@@ -18,7 +18,7 @@ CASES_PATH = PROJECT_ROOT / "evaluation/qwen_eval_cases.json"
 def test_evaluation_set_has_required_size_split_and_categories() -> None:
     cases = json.loads(CASES_PATH.read_text(encoding="utf-8"))
 
-    assert len(cases) == 39
+    assert len(cases) == 51
     assert len({case["id"] for case in cases}) == len(cases)
     assert sum(not case["prompt_example"] for case in cases) >= 20
     assert {
@@ -34,6 +34,11 @@ def test_evaluation_set_has_required_size_split_and_categories() -> None:
         "unsupported",
         "prompt_injection",
         "negation",
+        "contrast_quoted_literals",
+        "contrast_polarity",
+        "contrast_date_field",
+        "contrast_numeric_arity",
+        "contrast_numeric_operator",
     } <= {case["category"] for case in cases}
     assert all(case["expected_interpretation"] for case in cases)
     assert all(case["expected_answer"] for case in cases)
@@ -142,6 +147,10 @@ def test_report_metrics_and_markdown_are_derived_from_case_results() -> None:
 
     assert report["metrics"]["overall_pass_rate"] == 1.0
     assert report["metrics"]["supported_answer_accuracy"] == 1.0
+    assert report["metrics"]["non_prompt_example_count"] == 2
+    assert report["metrics"]["non_prompt_example_pass_rate"] == 1.0
     assert report["metrics"]["clarification_accuracy"] == 1.0
     assert report["metrics"]["latency_ms"]["median"] == 20.0
     assert "The Step 25 target was met." in markdown
+    assert "not an untouched final test set" in markdown
+    assert "Held-out" not in markdown

@@ -58,7 +58,7 @@ The checksum is the preservation reference for later ingestion and clean-run che
 | Initial structured request | 9.41 seconds |
 | Refined correct structured request | 11.65 seconds |
 
-These are smoke-test measurements on one machine, not final application benchmarks. The result establishes that the chosen model can produce the required structured output locally. It also establishes that JSON-schema validity alone is insufficient: the application must add explicit prompt examples, semantic validation, deterministic execution, and evaluation against held-out questions.
+These are smoke-test measurements on one machine, not final application benchmarks. The result establishes that the chosen model can produce the required structured output locally. It also establishes that JSON-schema validity alone is insufficient: the application must add explicit prompt examples, semantic completeness validation, deterministic execution, and labeled development/regression evaluation.
 
 ## Current PLAN.md status through Step 21
 
@@ -82,8 +82,8 @@ These are smoke-test measurements on one machine, not final application benchmar
   and stops only launcher-owned processes. The final isolated-port run reached ready
   status, returned all 28 data-quality findings, and released both ports on Ctrl+C.
 
-Latest verification: 206 deterministic/integration tests passed, Ruff and dependency
-checks passed, and all 32 live `qwen2.5:3b` tests passed in 147.66 seconds.
+Latest verification: 208 deterministic/integration tests passed, Ruff and dependency
+checks passed, and all 34 live `qwen2.5:3b` tests passed in 138.26 seconds.
 
 ## Step 22 diagnostics status
 
@@ -107,13 +107,14 @@ anomaly reasons, insufficient baselines, and idempotent ingestion. See
 
 ## Step 25 Qwen evaluation
 
-Step 25 is complete. The expanded 39-case benchmark labels expected interpretation
-and independently calculated answer evidence for five assessment samples and 34
-additional cases. Thirty cases are outside the exact prompt examples. The final
-`qwen2.5:3b` run passed 39/39 cases: 100% interpretation correctness, supported
+Step 25 is complete. The expanded 51-case benchmark labels expected interpretation
+and independently calculated answer evidence for five assessment samples and 46
+additional cases. Forty-two cases are outside the exact prompt examples. The final
+`qwen2.5:3b` run passed 51/51 cases: 100% interpretation correctness, supported
 answer correctness, assessment-sample correctness, non-example-case correctness,
 clarification behavior, and invalid/prompt-injection safe handling, with no execution
-failures. Mean end-to-end latency was 4,394.6 ms and P95 was 7,666.4 ms.
+failures. Mean end-to-end latency was 7,212.6 ms and P95 was 13,610.5 ms. The report
+labels these as development/regression results and makes no untouched-test claim.
 
 The first untuned run is preserved and reported honestly: it passed 25/32 overall and
 22/27 supported answers. General semantic guardrails were then added and covered by

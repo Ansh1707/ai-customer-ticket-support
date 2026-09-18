@@ -51,7 +51,7 @@ The final live run used the supplied 500-row CSV, its dataset reference time of
 | What is the average customer rating for Technical category tickets? | 3.7403846153846154 from 104 ratings across 152 matching tickets; displayed as 3.74 |
 | Are there any anomalies in resolution times this week? | TKT-108 at 119.7 hours, above the global 48.15-hour IQR fence |
 
-Five held-out questions also passed end to end:
+Five additional regression questions also passed end to end:
 
 | Capability | Question | Verified result |
 |---|---|---|
@@ -68,5 +68,5 @@ Five held-out questions also passed end to end:
   answer formatting.
 - Unit tests deliberately provide weak model plans and verify that explicit grouping,
   metrics, statuses and the absence of temporal language are preserved.
-- The final opt-in live suite passed all 10 assessment and held-out questions against
-  the installed local model in 43.82 seconds.
+- The final opt-in live suite passed all 34 checks against the installed local model,
+  including semantic completeness, quoted-literal isolation, and safe clarification.

@@ -129,6 +129,8 @@ Rules:
 - not resolved within N hours -> resolution_elapsed_hrs gt N
 - Preserve every numeric condition. A question may contain more than one condition.
 - "not Critical" excludes Critical; do not convert negation into equality.
+- Text inside quotes after an issue-summary search cue is literal search text. Do not
+  reinterpret words such as "Resolved", "Critical", or "overdue" inside it as filters.
 - "top N" ranks by the requested result descending and sets result_limit=N.
 - show/list requests -> operation=list
 - this/last week or month must populate relative_period; use resolved_at when the
@@ -477,11 +479,39 @@ def _reconcile_interpretation(
     """Apply the single documented semantic-precedence boundary."""
 
     if isinstance(structured, AnalyticsPlan):
-        return _compile_analytics_plan(
+        request = _compile_analytics_plan(
             _preserve_explicit_constraints(structured, question)
         )
+        gaps = _semantic_gaps(question, request)
+        if gaps:
+            return ClarificationRequest(
+                question=(
+                    "Please rephrase or simplify the following condition(s): "
+                    + "; ".join(gaps)
+                    + "."
+                ),
+                reason=(
+                    "The validated model output did not preserve every material "
+                    "condition safely, so the query was not executed."
+                ),
+            )
+        return request
     if isinstance(structured, AnomalyQueryRequest):
-        return _preserve_anomaly_request(structured, question)
+        request = _preserve_anomaly_request(structured, question)
+        gaps = _anomaly_semantic_gaps(question, request)
+        if gaps:
+            return ClarificationRequest(
+                question=(
+                    "Please rephrase or simplify the following condition(s): "
+                    + "; ".join(gaps)
+                    + "."
+                ),
+                reason=(
+                    "The validated model output did not preserve every material "
+                    "anomaly condition safely, so the query was not executed."
+                ),
+            )
+        return request
     return structured
 
 
@@ -595,28 +625,29 @@ def _preserve_explicit_constraints(
     """Prevent a compact model from dropping literal constraints in the question."""
 
     lowered = question.casefold()
+    instruction_text = _mask_quoted_literals(lowered)
     updates: dict[str, Any] = {}
     explicit_categories = tuple(
         item
         for item in TicketCategory
-        if _contains_word(lowered, item.value.casefold())
-        and not _is_negated_value(lowered, item.value.casefold())
+        if _contains_word(instruction_text, item.value.casefold())
+        and not _is_negated_value(instruction_text, item.value.casefold())
     )
     excluded_categories = tuple(
         item
         for item in TicketCategory
-        if _is_negated_value(lowered, item.value.casefold())
+        if _is_negated_value(instruction_text, item.value.casefold())
     )
     explicit_priorities = tuple(
         item
         for item in TicketPriority
-        if _contains_word(lowered, item.value.casefold())
-        and not _is_negated_value(lowered, item.value.casefold())
+        if _contains_word(instruction_text, item.value.casefold())
+        and not _is_negated_value(instruction_text, item.value.casefold())
     )
     excluded_priorities = tuple(
         item
         for item in TicketPriority
-        if _is_negated_value(lowered, item.value.casefold())
+        if _is_negated_value(instruction_text, item.value.casefold())
     )
     # Categorical filters are closed-world dataset values. Rebuild them from the
     # question so a small model cannot silently narrow a result with invented values.
@@ -632,10 +663,10 @@ def _preserve_explicit_constraints(
         "not yet resolved",
         "still pending",
     )
-    if any(phrase in lowered for phrase in unresolved_phrases):
+    if any(phrase in instruction_text for phrase in unresolved_phrases):
         updates["statuses"] = (TicketStatus.OPEN, TicketStatus.ESCALATED)
         updates["excluded_statuses"] = ()
-    elif "not resolved within" in lowered:
+    elif "not resolved within" in instruction_text:
         # This asks about elapsed resolution duration across resolved and unresolved
         # tickets, so it must not be narrowed to status=Resolved.
         updates["statuses"] = ()
@@ -644,18 +675,21 @@ def _preserve_explicit_constraints(
         updates["statuses"] = tuple(
             item
             for item in TicketStatus
-            if _contains_word(lowered, item.value.casefold())
-            and not _is_negated_value(lowered, item.value.casefold())
+            if _contains_word(instruction_text, item.value.casefold())
+            and not _is_negated_value(instruction_text, item.value.casefold())
         )
         updates["excluded_statuses"] = tuple(
             item
             for item in TicketStatus
-            if _is_negated_value(lowered, item.value.casefold())
+            if _is_negated_value(instruction_text, item.value.casefold())
         )
 
     search_cues = ("summary", "contain", "mention", "search")
-    if not any(cue in lowered for cue in search_cues):
-        updates["summary_contains"] = None
+    updates["summary_contains"] = (
+        _extract_summary_literal(lowered)
+        if any(cue in instruction_text for cue in search_cues)
+        else None
+    )
 
     period_phrases = {
         "this week": RelativePeriod.THIS_WEEK,
@@ -665,10 +699,10 @@ def _preserve_explicit_constraints(
     }
     matched_period = False
     for phrase, period in period_phrases.items():
-        if phrase in lowered:
+        if phrase in instruction_text:
             matched_period = True
             updates["relative_period"] = period
-            updates["time_field"] = _explicit_time_field(lowered)
+            updates["time_field"] = _explicit_time_field(instruction_text)
             break
     temporal_cues = (
         "today",
@@ -690,11 +724,13 @@ def _preserve_explicit_constraints(
         "november",
         "december",
     )
-    has_explicit_date = re.search(r"\b\d{4}-\d{2}-\d{2}\b", lowered) is not None
+    has_explicit_date = (
+        re.search(r"\b\d{4}-\d{2}-\d{2}\b", instruction_text) is not None
+    )
     if (
         not matched_period
         and not has_explicit_date
-        and not any(cue in lowered for cue in temporal_cues)
+        and not any(cue in instruction_text for cue in temporal_cues)
     ):
         updates.update(
             time_field=None,
@@ -702,40 +738,43 @@ def _preserve_explicit_constraints(
             start_date=None,
             end_date=None,
         )
-    explicit_range = _extract_explicit_date_range(lowered)
+    explicit_range = _extract_explicit_date_range(instruction_text)
     if explicit_range is not None:
         start_date, end_date = explicit_range
         updates.update(
             start_date=start_date,
             end_date=end_date,
             relative_period=None,
-            time_field=_explicit_time_field(lowered),
+            time_field=_explicit_time_field(instruction_text),
         )
 
-    updates["numeric_conditions"] = _extract_numeric_conditions(lowered)
+    updates["numeric_conditions"] = _extract_numeric_conditions(instruction_text)
 
-    rating_language = "customer rating" in lowered or "satisfaction" in lowered
-    if "resolution time" in lowered:
+    rating_language = (
+        "customer rating" in instruction_text or "satisfaction" in instruction_text
+    )
+    if "resolution time" in instruction_text:
         updates["metric"] = MetricField.RESOLUTION_TIME_HRS
-    elif "response time" in lowered:
+    elif "response time" in instruction_text:
         updates["metric"] = MetricField.RESPONSE_TIME_HRS
-    average_language = "average" in lowered or "mean" in lowered
+    average_language = "average" in instruction_text or "mean" in instruction_text
     requested_group: GroupField | None = None
     if any(
-        phrase in lowered
+        phrase in instruction_text
         for phrase in ("which category", "by category", "per category", "each category")
     ):
         requested_group = GroupField.CATEGORY
     elif any(
-        phrase in lowered
+        phrase in instruction_text
         for phrase in ("which priority", "by priority", "per priority")
     ):
         requested_group = GroupField.PRIORITY
     elif any(
-        phrase in lowered for phrase in ("which status", "by status", "per status")
+        phrase in instruction_text
+        for phrase in ("which status", "by status", "per status")
     ):
         requested_group = GroupField.STATUS
-    elif "agent" in lowered or "who" in lowered:
+    elif "agent" in instruction_text or "who" in instruction_text:
         requested_group = GroupField.AGENT_ID
     if rating_language:
         updates["metric"] = MetricField.CUSTOMER_RATING
@@ -747,16 +786,17 @@ def _preserve_explicit_constraints(
             else AnalyticsOperation.AGGREGATE
         )
     if requested_group is not None and any(
-        word in lowered for word in ("most", "highest", "lowest", "worst", "best")
+        word in instruction_text
+        for word in ("most", "highest", "lowest", "worst", "best")
     ):
         updates["operation"] = AnalyticsOperation.GROUPED_AGGREGATE
         updates["group_by"] = requested_group
         updates["sort_field"] = SortField.RESULT
         updates["result_limit"] = 1
-    if "resolved the most" in lowered:
+    if "resolved the most" in instruction_text:
         updates["aggregation"] = Aggregation.COUNT
         updates["statuses"] = (TicketStatus.RESOLVED,)
-    top_match = re.search(r"\b(top|bottom)\s+(\d{1,3})\b", lowered)
+    top_match = re.search(r"\b(top|bottom)\s+(\d{1,3})\b", instruction_text)
     if top_match is not None and requested_group is not None:
         updates["operation"] = AnalyticsOperation.GROUPED_AGGREGATE
         updates["aggregation"] = Aggregation.COUNT
@@ -768,29 +808,31 @@ def _preserve_explicit_constraints(
             else SortDirection.ASCENDING
         )
         updates["result_limit"] = min(100, max(1, int(top_match.group(2))))
-        if "resolved" in lowered:
+        if "resolved" in instruction_text:
             updates["statuses"] = (TicketStatus.RESOLVED,)
-    if requested_group is not None and "count" in lowered:
+    if requested_group is not None and "count" in instruction_text:
         updates["operation"] = AnalyticsOperation.GROUPED_AGGREGATE
         updates["aggregation"] = Aggregation.COUNT
         updates["group_by"] = requested_group
         if top_match is None and not any(
-            word in lowered for word in ("most", "highest", "lowest", "worst", "best")
+            word in instruction_text
+            for word in ("most", "highest", "lowest", "worst", "best")
         ):
             updates["sort_field"] = SortField(requested_group.value)
             updates["sort_direction"] = SortDirection.ASCENDING
-    if any(word in lowered for word in ("lowest", "worst")):
+    if any(word in instruction_text for word in ("lowest", "worst")):
         updates["sort_direction"] = SortDirection.ASCENDING
-    elif any(word in lowered for word in ("most", "highest")):
+    elif any(word in instruction_text for word in ("most", "highest")):
         updates["sort_direction"] = SortDirection.DESCENDING
     if requested_group is None and (
-        "how many" in lowered or lowered.startswith("count ")
+        "how many" in instruction_text or instruction_text.startswith("count ")
     ):
         updates["operation"] = AnalyticsOperation.COUNT
-    if requested_group is None and lowered.startswith(("show ", "list ")):
+    if requested_group is None and instruction_text.startswith(("show ", "list ")):
         updates["operation"] = AnalyticsOperation.LIST
     if top_match is None and not any(
-        word in lowered for word in ("most", "highest", "lowest", "worst", "best")
+        word in instruction_text
+        for word in ("most", "highest", "lowest", "worst", "best")
     ):
         updates["result_limit"] = None
 
@@ -800,7 +842,7 @@ def _preserve_explicit_constraints(
 def _preserve_safe_route(route: IntentRoute, question: str) -> IntentRoute:
     """Override high-confidence safety and anomaly cues missed by the small model."""
 
-    lowered = question.casefold()
+    lowered = _mask_quoted_literals(question.casefold())
     if re.search(r"\b(predict|forecast|estimate)\b", lowered) and re.search(
         r"\b(future|next|will)\b", lowered
     ):
@@ -825,7 +867,7 @@ def _preserve_anomaly_request(
 ) -> AnomalyQueryRequest:
     """Preserve explicit anomaly rule and date language from the question."""
 
-    lowered = question.casefold()
+    lowered = _mask_quoted_literals(question.casefold())
     updates: dict[str, Any] = {}
     if "overdue" in lowered:
         updates["rule"] = "overdue_high_priority"
@@ -903,6 +945,279 @@ def _is_negated_value(text: str, value: str) -> bool:
         )
         is not None
     )
+
+
+_QUOTED_LITERAL_PATTERN = re.compile(
+    r'"(?P<double>[^"\n]+)"|“(?P<smart_double>[^”\n]+)”|'
+    r"'(?P<single>[^'\n]+)'|‘(?P<smart_single>[^’\n]+)’"
+)
+
+
+def _quoted_literals(text: str) -> tuple[str, ...]:
+    """Return user-delimited literals without treating their contents as commands."""
+
+    return tuple(
+        next(value for value in match.groupdict().values() if value is not None).strip()
+        for match in _QUOTED_LITERAL_PATTERN.finditer(text)
+    )
+
+
+def _mask_quoted_literals(text: str) -> str:
+    """Hide quoted literals from categorical, date, and numeric cue extraction."""
+
+    return _QUOTED_LITERAL_PATTERN.sub(
+        lambda match: " " * len(match.group(0)),
+        text,
+    )
+
+
+def _extract_summary_literal(text: str) -> str | None:
+    """Extract a literal issue-summary search term from quoted or simple wording."""
+
+    instruction_text = _mask_quoted_literals(text)
+    if not re.search(r"\b(?:issue\s+)?summar(?:y|ies)\b", instruction_text):
+        return None
+    if not re.search(
+        r"\b(?:contain|contains|containing|mention|mentions|search)\b", instruction_text
+    ):
+        return None
+
+    quoted = _quoted_literals(text)
+    if quoted:
+        return quoted[0] or None
+
+    match = re.search(
+        r"\b(?:contain|contains|containing|mention|mentions|search(?:es|ed)?(?:\s+for)?)\s+"
+        r"(?:the\s+)?(?:literal\s+)?(?:text\s+)?(?P<value>.+?)(?:[?.!]|$)",
+        text,
+    )
+    if match is None:
+        return None
+    value = re.split(
+        r"\s+(?:and|with)\s+(?=(?:status|priority|category|created|resolved|"
+        r"response|resolution|customer)\b)",
+        match.group("value"),
+        maxsplit=1,
+    )[0].strip()
+    return value or None
+
+
+def _semantic_gaps(question: str, request: AnalyticsRequest) -> tuple[str, ...]:
+    """Reject schema-valid requests that lose or invent material user constraints."""
+
+    text = question.casefold()
+    instruction_text = _mask_quoted_literals(text)
+    gaps: list[str] = []
+
+    def categorical_values(
+        field: FilterField,
+        *,
+        excluded: bool,
+    ) -> set[str]:
+        values: set[str] = set()
+        for item in request.filters:
+            if item.field != field:
+                continue
+            if (excluded and item.operator == "ne") or (
+                not excluded and item.operator == "eq"
+            ):
+                values.add(str(item.value))
+            elif not excluded and item.operator == "in":
+                values.update(str(value) for value in item.values)
+        return values
+
+    for field, values in (
+        (FilterField.CATEGORY, TicketCategory),
+        (FilterField.PRIORITY, TicketPriority),
+    ):
+        expected = {
+            item.value
+            for item in values
+            if _contains_word(instruction_text, item.value.casefold())
+            and not _is_negated_value(instruction_text, item.value.casefold())
+        }
+        excluded = {
+            item.value
+            for item in values
+            if _is_negated_value(instruction_text, item.value.casefold())
+        }
+        if categorical_values(field, excluded=False) != expected:
+            gaps.append(f"{field.value} filter")
+        if categorical_values(field, excluded=True) != excluded:
+            gaps.append(f"negated {field.value} filter")
+
+    unresolved_phrases = (
+        "unresolved",
+        "awaiting resolution",
+        "awaiting a resolution",
+        "not yet resolved",
+        "still pending",
+    )
+    if any(phrase in instruction_text for phrase in unresolved_phrases):
+        expected_statuses = {TicketStatus.OPEN.value, TicketStatus.ESCALATED.value}
+    elif "not resolved within" in instruction_text:
+        expected_statuses = set()
+    else:
+        expected_statuses = {
+            item.value
+            for item in TicketStatus
+            if _contains_word(instruction_text, item.value.casefold())
+            and not _is_negated_value(instruction_text, item.value.casefold())
+        }
+    excluded_statuses = (
+        set()
+        if "not resolved within" in instruction_text
+        else {
+            item.value
+            for item in TicketStatus
+            if _is_negated_value(instruction_text, item.value.casefold())
+        }
+    )
+    if categorical_values(FilterField.STATUS, excluded=False) != expected_statuses:
+        gaps.append("status filter")
+    if categorical_values(FilterField.STATUS, excluded=True) != excluded_statuses:
+        gaps.append("negated status filter")
+
+    summary_cue = re.search(
+        r"\b(?:issue\s+)?summar(?:y|ies)\b", instruction_text
+    ) and re.search(
+        r"\b(?:contain|contains|containing|mention|mentions|search)\b",
+        instruction_text,
+    )
+    expected_summary = _extract_summary_literal(text)
+    actual_summaries = [
+        item.value
+        for item in request.filters
+        if item.field == FilterField.ISSUE_SUMMARY and item.operator == "contains"
+    ]
+    if (summary_cue and expected_summary is None) or (
+        expected_summary is not None and actual_summaries != [expected_summary]
+    ):
+        gaps.append("issue-summary search text")
+    elif expected_summary is None and actual_summaries:
+        gaps.append("unstated issue-summary filter")
+
+    expected_numeric = {
+        (item.field, item.operator, item.value)
+        for item in _extract_numeric_conditions(instruction_text)
+    }
+    actual_numeric = {
+        (item.field, item.operator, float(item.value))
+        for item in request.filters
+        if item.field
+        in {
+            FilterField.RESPONSE_TIME_HRS,
+            FilterField.RESOLUTION_TIME_HRS,
+            FilterField.CUSTOMER_RATING,
+            FilterField.RESOLUTION_ELAPSED_HRS,
+        }
+        and item.operator in {"eq", "gt", "gte", "lt", "lte"}
+    }
+    if actual_numeric != expected_numeric:
+        gaps.append("numeric condition")
+    if re.search(
+        r"\b(?:response time|resolution time|customer rating|satisfaction score|rating)\b"
+        r"[^?.!]{0,30}\b(?:between|not equal|different from)\b",
+        instruction_text,
+    ):
+        gaps.append("unsupported numeric comparison")
+
+    periods = {
+        "this week": RelativePeriod.THIS_WEEK,
+        "last week": RelativePeriod.LAST_WEEK,
+        "this month": RelativePeriod.THIS_MONTH,
+        "last month": RelativePeriod.LAST_MONTH,
+    }
+    expected_period = next(
+        (period for phrase, period in periods.items() if phrase in instruction_text),
+        None,
+    )
+    expected_range = _extract_explicit_date_range(instruction_text)
+    expected_time_field = _explicit_time_field(instruction_text)
+    if expected_period is not None:
+        if request.time_filter is None or (
+            request.time_filter.relative_period != expected_period
+            or request.time_filter.field != expected_time_field
+        ):
+            gaps.append("relative date period")
+    elif expected_range is not None:
+        if (
+            request.time_filter is None
+            or (
+                request.time_filter.start_date,
+                request.time_filter.end_date,
+            )
+            != expected_range
+        ):
+            gaps.append("explicit date range")
+        elif request.time_filter.field != expected_time_field:
+            gaps.append("date field")
+    elif (
+        re.search(
+            r"\b(?:today|yesterday|since|during|january|february|march|april|may|"
+            r"june|july|august|september|october|november|december)\b",
+            instruction_text,
+        )
+        and request.time_filter is None
+    ):
+        gaps.append("date condition")
+
+    top_match = re.search(r"\b(?:top|bottom)\s+(\d{1,3})\b", instruction_text)
+    if top_match is not None and request.result_limit != int(top_match.group(1)):
+        gaps.append("requested result count")
+
+    return tuple(dict.fromkeys(gaps))
+
+
+def _anomaly_semantic_gaps(
+    question: str,
+    request: AnomalyQueryRequest,
+) -> tuple[str, ...]:
+    """Verify material anomaly rule and date cues after deterministic reconciliation."""
+
+    text = _mask_quoted_literals(question.casefold())
+    gaps: list[str] = []
+    if "overdue" in text:
+        expected_rule = "overdue_high_priority"
+    elif "shorter than" in text and "response" in text:
+        expected_rule = "resolution_before_response"
+    elif ("anomal" in text or "outlier" in text) and "resolution" in text:
+        expected_rule = "long_resolution"
+    else:
+        expected_rule = None
+    if expected_rule is not None and request.rule != expected_rule:
+        gaps.append("anomaly rule")
+
+    periods = {
+        "this week": RelativePeriod.THIS_WEEK,
+        "last week": RelativePeriod.LAST_WEEK,
+        "this month": RelativePeriod.THIS_MONTH,
+        "last month": RelativePeriod.LAST_MONTH,
+    }
+    expected_period = next(
+        (period for phrase, period in periods.items() if phrase in text),
+        None,
+    )
+    expected_range = _extract_explicit_date_range(text)
+    expected_field = (
+        TicketTimeField.CREATED_AT
+        if request.rule.value == "overdue_high_priority"
+        else _explicit_time_field(text, default=TicketTimeField.RESOLVED_AT)
+    )
+    if expected_period is not None and (
+        request.time_filter is None
+        or request.time_filter.relative_period != expected_period
+        or request.time_filter.field != expected_field
+    ):
+        gaps.append("anomaly date period")
+    elif expected_range is not None and (
+        request.time_filter is None
+        or (request.time_filter.start_date, request.time_filter.end_date)
+        != expected_range
+        or request.time_filter.field != expected_field
+    ):
+        gaps.append("anomaly date range")
+    return tuple(gaps)
 
 
 def _explicit_time_field(

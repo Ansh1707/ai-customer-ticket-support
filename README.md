@@ -278,9 +278,11 @@ Run the separate Step 25 labeled evaluation while Ollama is running:
 python scripts/evaluate_qwen.py
 ```
 
-The 39-case benchmark includes all five assessment samples, 30 cases outside the
-exact prompt examples, combined filters, rankings, aggregates, dates, literal search,
-anomalies, ambiguity, unsupported requests, and prompt injection. Expected
+The 51-case development/regression benchmark includes all five assessment samples, 42
+cases outside the exact prompt examples, contrast pairs for quoted literals, polarity,
+date fields and numeric conditions, plus rankings, anomalies, ambiguity, unsupported
+requests, and prompt injection. These cases were used during development and are not
+presented as an untouched final test set. Expected
 interpretations and independently calculated answer evidence are stored in
 [`evaluation/qwen_eval_cases.json`](evaluation/qwen_eval_cases.json). The final
 measured report is [`docs/QWEN_EVALUATION.md`](docs/QWEN_EVALUATION.md); the preserved
@@ -301,10 +303,10 @@ python scripts/audit_repository.py
 
 Verification results:
 
-- 206 deterministic and integration tests passed; 32 live tests are skipped by default
-- 32 of 32 live `qwen2.5:3b` tests passed in 147.66 seconds
-- the final 39-case Qwen evaluation passed 39/39, including all 30 cases outside the
-  exact prompt examples; mean end-to-end latency was 5.82 seconds and P95 was 13.23 seconds
+- 208 deterministic and integration tests passed; 34 live tests are skipped by default
+- 34 of 34 live `qwen2.5:3b` tests passed in 138.26 seconds
+- the 51-case Qwen development/regression evaluation passed 51/51, including all 42
+  cases outside exact prompt examples; mean latency was 7.21 seconds and P95 was 13.61 seconds
 - exact pinned dependencies installed into a new Python 3.11 environment
 - Ruff, compilation, `pip check`, HTTP readiness, and graceful shutdown passed
 

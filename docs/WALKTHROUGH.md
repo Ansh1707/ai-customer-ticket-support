@@ -103,11 +103,11 @@ the already captured output in the README rather than repeatedly submitting.
 
 Show the README testing section and reports rather than running long suites live:
 
-- 206 deterministic/integration tests;
-- 32/32 live-Qwen tests;
-- 39/39 labeled evaluation cases, including all five assessment samples and 30 cases
-  outside the exact prompt examples;
-- 5.82-second mean and 13.23-second P95 evaluation latency;
+- 208 deterministic/integration tests;
+- 34/34 live-Qwen tests;
+- 51/51 labeled development/regression cases, including all five assessment samples
+  and 42 cases outside the exact prompt examples;
+- 7.21-second mean and 13.61-second P95 evaluation latency;
 - final clean-environment install, startup and shutdown rehearsal.
 
 Describe failure behavior:
@@ -171,7 +171,7 @@ incidents before adding statistical or learned detectors.
 | Why not give the CSV to Qwen? | It wastes context, weakens arithmetic reliability and exposes row data unnecessarily. |
 | How is prompt injection contained? | User text can only populate a strict request union; execution uses allowlisted operations and parameters. |
 | Why does “this month” return only one resolution? | The reproducible dataset clock is April 5 and only one inferred completion falls in April 1–5. |
-| Are 39/39 results guaranteed? | No. They are one recorded temperature-zero run; the initial baseline is retained and model behavior can vary. |
+| Are 51/51 results proof of generalization? | No. They are development/regression evidence from one temperature-zero run, not an untouched test set; the initial baseline is retained and model behavior can vary. |
 | What would you improve next? | Add event history, production auth/observability, richer evaluation splits and domain-specific anomaly policies. |
 
 ## Final presenter checklist

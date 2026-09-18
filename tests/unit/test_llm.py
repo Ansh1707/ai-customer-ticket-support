@@ -29,6 +29,7 @@ from ticket_support_ai.llm import (
     _preserve_explicit_constraints,
     _preserve_safe_route,
     _reconcile_interpretation,
+    _semantic_gaps,
 )
 from ticket_support_ai.schemas import (
     AnalyticsOperation,
@@ -490,3 +491,41 @@ def test_reconciliation_is_the_only_literal_preservation_boundary() -> None:
         (FilterField.PRIORITY, "eq", "Critical"),
         (FilterField.RESOLUTION_ELAPSED_HRS, "gt", 12.0),
     ]
+
+
+def test_quoted_summary_literal_is_not_reinterpreted_as_a_filter() -> None:
+    request = _reconcile_interpretation(
+        AnalyticsPlan(
+            operation="count",
+            statuses=("Resolved",),
+            summary_contains="resolved",
+        ),
+        'How many issue summaries contain "resolved"?',
+    )
+
+    assert isinstance(request, AnalyticsRequest)
+    assert [(item.field, item.operator, item.value) for item in request.filters] == [
+        (FilterField.ISSUE_SUMMARY, "contains", "resolved")
+    ]
+    assert (
+        _preserve_safe_route(
+            IntentRoute(intent=QueryIntent.ANALYTICS),
+            'How many issue summaries contain "overdue"?',
+        ).intent
+        is QueryIntent.ANALYTICS
+    )
+
+
+def test_semantic_completeness_gate_blocks_partial_or_unsupported_conditions() -> None:
+    incomplete = AnalyticsRequest.model_validate({"operation": "count"})
+    assert _semantic_gaps(
+        "How many tickets have customer rating below 3?",
+        incomplete,
+    ) == ("numeric condition",)
+
+    result = _reconcile_interpretation(
+        AnalyticsPlan(operation="count"),
+        "How many tickets have customer rating between 2 and 4?",
+    )
+    assert result.intent is QueryIntent.CLARIFICATION
+    assert "unsupported numeric comparison" in result.question
